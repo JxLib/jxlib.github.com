@@ -1,0 +1,35 @@
+{
+    "Base": {
+        "common": ["dependencies"],
+        "list": ["all"]
+    },
+    "Button": {
+    	"button": ["all"]
+    },
+    "Data": {
+        "protocol.ajax": ["all"]
+    },
+    "Grid": {
+        "grid": ["basic","changeData", "headers","formatters","prelighter","selector","sorter","editor"]
+    },
+    "Form": {
+        "form": ["fields","fieldset","form","file", "validation"]
+    },
+    "Extras": {
+        "progressbar": ["all"],
+        "slider": ["all"],
+        "slide": ["all"],
+        "notifier": ["all"]
+    },
+    "Panel": {
+        "message": ["all"],
+        "confirm": ["all"],
+        "prompt": ["all"],
+        "dataview": ["all"],
+        "group": ["all"],
+        "upload": ["all"]
+    },
+    "Toolbar": {
+        "container": ["all"]
+    }
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>Jx.Button.Flyout Integrated Examples</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="../../lib/mootools-core.js"></script>
+<script type="text/javascript" src="../../lib/mootools-more.js"></script>
+<script type="text/javascript" src="../../lib/jxlib.standalone.uncompressed.js"></script>
+<script src="js/tests.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/locale.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">
+window.addEvent('load', function() {
+    panelFlyout();
+    tabFlyout();
+    dialogFlyout();
+});
+if($(document).getElements('.tabContentActiveExamples').length > 0) {
+  $(document).getElements('.tabContentActiveExamples')[0].addEvent('loadAjax', function() {
+    panelFlyout();
+    tabFlyout();
+    dialogFlyout();
+  });
+}
+</script>
+
+<script id="panelFlyoutScript" type="text/javascript">
+function panelFlyout() {
+    /* a flyout with a Panel as content */
+    new Jx.Button.Flyout({
+        label: 'Panel in Flyout',
+        image: 'images/page_white_code.png',
+        content: new Jx.Panel({
+            contentURL: 'panel_content.html',
+            label: 'Panel in Flyout',
+            width: 300,
+            height: 300,
+            collapse: false
+        })        
+    }).addTo('flyoutPanel');
+}
+</script>
+
+<script id="tabFlyoutScript" type="text/javascript">
+function tabFlyout() {
+    /* this is a flyout with a tab box and for fun, 
+     * a color palette in one of the tabs
+     */
+    new Jx.Button.Flyout({
+        label: 'TabBox in Flyout',
+        image: 'images/page_white_world.png',
+        content: new Jx.TabBox({
+            width: 192,
+            height: 174
+        }).add(
+            new Jx.Tab({
+                label: 'Colors', 
+                content: new Jx.ColorPalette()
+            }),
+            new Jx.Tab({
+                label: 'Ajax Content', 
+                image: 'images/page_white_world.png',
+                contentURL: 'tab_content.html'
+            })
+        )
+    }).addTo('flyoutTab');
+}
+</script>
+
+<script id="dialogFlyoutScript" type="text/javascript">
+function dialogFlyout() {
+    /* this is a dialog that contains a flyout to test the z-order of menus and 
+     * dialogs
+     */
+    d2 = new Jx.Dialog({
+        label: 'Positioned Dialog',
+        image: 'images/page_white_code.png',
+        modal: false, 
+        horizontal: '200 left', 
+        vertical: '50 top', 
+        content: 'FlyoutDialogContent', 
+        resize: true,
+        maximize: true
+    });
+    
+    new Jx.Button({
+        image: 'images/page_white_code.png', 
+        label: 'Open Dialog', 
+        onClick: d2.open.bind(d2)
+    }).addTo('flyoutDialog');
+
+    new Jx.Button.Flyout({
+        label: 'Flyout in a Dialog',
+        image: 'images/page_white_code.png',
+        content: new Jx.Panel({
+            contentURL: 'panel_content.html',
+            label: 'Panel in Flyout',
+            width: 300,
+            height: 300,
+            collapse: false
+        })
+    }).addTo('FlyoutDialogContent');
+}
+</script>
+
+</head>
+<body>
+<h1>Jx.Button.Flyout Integrated Examples</h1>
+<p>API Reference: <a id="button-flyout-js" href="javascript:void(0)" title="link to API Reference">Jx.Button.Flyout</a> Extends <a id="button-js" href="javascript:void();" title="link to API Reference">Jx.Button</a></p>
+
+<p>These examples show integration of various other JxLib components into flyouts.</p>
+
+<h2 id="panelFlyout">Panel in Flyout</h2>
+<p>This flyout contains a panel.</p>
+<div id="flyoutPanel" class="buttonBox"></div>
+
+<h2 id="tabFlyout">TabBox in Flyout</h2>
+<p>This flyout contains a TabBox.  For fun, there's a color palette in one of the tabs too!.</p>
+<div id="flyoutTab" class="buttonBox"></div>
+
+<h2 id="dialogFlyout">Flyout in a Dialog</h2>
+<p>This dialog contains a Flyout.  The z-order of dialogs and menus allows this to happen properly.</p>
+<div id="FlyoutDialogContent"></div>
+<div id="flyoutDialog" class="buttonBox"></div>
+
+</body>
+</html>

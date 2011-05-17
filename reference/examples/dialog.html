@@ -1,0 +1,402 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>Jx.Dialog Examples</title>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="../../lib/mootools-core.js"></script>
+<script type="text/javascript" src="../../lib/mootools-more.js"></script>
+<script type="text/javascript" src="../../lib/jxlib.standalone.uncompressed.js"></script>
+<script src="js/tests.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/locale.js" type="text/javascript" charset="utf-8"></script>
+<script  type="text/javascript">
+    var d1, d2, d3, d4, d5, d6, d7, d8, d9;
+    window.addEvent('load', function() {
+        drawBasicDialog();
+        drawPositionedDialog();
+        drawToolbarDialog();
+        drawAjaxFailedDialog();
+        drawConfirmDialog();
+        drawPromptDialog();
+    });
+   if($(document).getElements('.tabContentActiveExamples').length > 0) {
+      $(document).getElements('.tabContentActiveExamples')[0].addEvent('loadAjax', function() {
+        drawBasicDialog();
+        drawPositionedDialog();
+        drawToolbarDialog();
+        drawAjaxFailedDialog();
+        drawConfirmDialog();
+        drawPromptDialog();
+      });
+    }
+    
+    /* normally we wouldn't switch the stylesheet on the fly - 
+     * the stylesheet switcher emits an event that the 
+     * stylesheet has changed and we tear down any existing 
+     * chrome so that we can rebuild it from the new stylesheet.
+     * This still has some problems with layout inside the 
+     * dialog but it is functional if you resize the dialog
+     */
+    window.addEvent('stylesheetChanged', function() {
+        [d1,d2,d3,d4,d5,d6,d7,d8,d9].each(function(d) {
+            if (d && d.chrome) {
+                d.close();
+                d.chrome.dispose();
+                d.chrome = null;                
+            }
+        });
+    });
+    
+</script>
+<script id="basicDialogScript" type='text/javascript'>
+function drawBasicDialog() {
+    /* a simple dialog with HTML content, not moveable.
+     */
+    d1 = new Jx.Dialog({
+        label: 'static',
+        image: 'images/page_white_text.png',
+        modal: false, 
+        resize: false,
+        move: false,
+        content: "<h3>Content from HTML String</h3>"+
+            "<p>This dialog cannot be moved or resized, but it can be collapsed.</p>"
+    });
+
+    new Jx.Button({
+        image: 'images/page_white_text.png', 
+        label: {set:'Examples',key:'dialog',value:'btnStatic'},
+        onClick: d1.open.bind(d1)
+    }).addTo('basicDialogButton'); 
+    
+    
+}
+</script>
+<script id="positionedDialogScript" type='text/javascript'>
+function drawPositionedDialog() {
+    
+    /* another simple dialog that picks up its content from an existing 
+     * element by id and has an initial starting position.  It is also
+     * modal.
+     */
+    d2 = new Jx.Dialog({
+        label: {set:'Examples',key:'dialog',value:'dialogModal'},
+        image: 'images/page_white_code.png',
+        modal: true, 
+        horizontal: '200 left', 
+        vertical: '50 top', 
+        content: 'inlineContent', 
+        resize: true,
+        maximize: true,
+        useKeyboard: true,
+        //limit: {x:[0,window.getCoordinates().right], y:[0,window.getCoordinates().bottom]},
+        limit: document,
+        // example how to add custom keyboard shortcuts, this also works with subclasses
+        keys : {
+          'alt+enter' : 'maximizeDialog',
+          'ctrl+up' : function(ev) {
+            ev.preventDefault();
+            this.toggleCollapse(true);
+          },
+          'ctrl+down' : function(ev) {
+            ev.preventDefault();
+            this.toggleCollapse(false);
+          }
+        },
+        keyboardMethods : {
+          'maximizeDialog' : function(ev) {
+            ev.preventDefault();
+            this.maximize();
+          }
+        }
+    });
+    
+    new Jx.Button({
+        image: 'images/page_white_code.png', 
+        label: {set:'Examples',key:'dialog',value:'btnModal'},
+        onClick: d2.open.bind(d2)
+    }).addTo('positionedDialogButton');
+}
+</script>
+<script type="text/javascript" id="toolbarDialogScript">
+function drawToolbarDialog() {   
+    /* A dialog with a toolbar that loads its content from a URL
+     * and does something with the content after it is loaded.
+     *
+      This dialog is positioned relative to the right and bottom
+     * of the page.
+     */
+    var toolbarDialog = new Jx.Toolbar({position:'top'});
+    toolbarDialog.add(
+        new Jx.Button({
+            label: 'button 1', 
+            onClick: function() {
+                log('button 1 inside dialog clicked');
+            }
+        }),
+        new Jx.Button({
+            label: 'reload content',
+            onClick: function() {
+                d3.openURL(d3.options.contentURL);
+                log('button 2 inside dialog clicked');
+            }
+        })
+    );
+    d3 = new Jx.Dialog({
+        label: {set:'Examples',key:'dialog',value:'dialogDynamic'},
+        image: 'images/page_white_world.png',
+        modal: false, 
+        horizontal: 'right -200',
+        vertical: 'bottom -5',
+        width: 400,
+        height: 400,
+        contentURL: 'dialog_content.html',
+        loadOnDemand: true,
+        onContentLoaded: function () {
+            var el = this.content.getElementById('updateMe')
+            if (el) {
+                el.set('html', 'Content Updated!');
+            }
+        },
+        toolbars: [toolbarDialog]
+    });
+    new Jx.Button({
+        image: 'images/page_white_world.png', 
+        label: {set:'Examples',key:'dialog',value:'btnDynamic'},
+        onClick: d3.open.bind(d3)
+    }).addTo('toolbarDialogButton');
+    new Jx.Button({
+        image: 'images/page_white_world.png',
+        label: 'busy dialog',
+        toggle: true,
+        onDown: function() {
+          if(d3.domObj.getStyle('display') == 'block') {
+            // set dialog busy with custom (localized) message
+            d3.setBusy(true, {set:'Examples',key:'dialog',value:'btnBusy'}, true);
+          }
+        },
+        onUp: function() {
+          if(d3.domObj.getStyle('display') == 'block') {
+            d3.setBusy(false);
+          }
+        }
+    }).addTo('toolbarDialogButton');
+}
+</script>
+<script type="text/javascript" id="ajaxFailedDialogScript">
+function drawAjaxFailedDialog() {
+    /* a dialog that fails to load some content so we can test the
+     * content events
+     */
+    d4 = new Jx.Dialog({
+        label: {set:'Examples',key:'dialog',value:'dialogInvalid'},
+        image: 'images/page_white_world.png',
+        modal: false, 
+        width: 400,
+        height: 400,
+        /* test failure to load content */
+        contentURL: 'invalid_content_url.html',
+        loadOnDemand: false,
+        onContentLoaded: function() {
+          log('Loaded content when it shouldn\'t have');
+          this.content.innerHTML = "<h3>Fail!</h3>" +
+              "<p>We tried to load content from a URL" + 
+              "that doesn't exist and it worked when it "+
+              "shouldn't have.</p>";
+        },
+        onContentLoadFailed: function() {
+          log('content correctly failed to load');
+          this.content.innerHTML = "<h3>Content Failed To Load</h3>"+
+            "<p>We tried to load content from a URL that doesn't " +
+            "exist and have inserted this content in the function "+
+            "that handles the failure event.</p>";
+        }
+    });
+    new Jx.Button({
+       image: 'images/page_white_world.png', 
+       label: {set:'Examples',key:'dialog',value:'btnInvalid'},
+       onClick: d4.open.bind(d4)
+    }).addTo('ajaxFailedDialogButton');
+}
+</script>
+<script type="text/javascript" id="confirmDialogScript">
+function drawConfirmDialog() {
+
+    /**
+     *  Confirm Dialog with localized question
+     */
+    d5 = new Jx.Dialog.Confirm({
+        image: 'images/help.png',
+        limit: document,
+        question: {set:'Examples',key:'dialog',value:'dialogConfirm'},
+        onClose : function(dialog, value) {
+          log("You clicked "+ value);
+        }
+    });
+    new Jx.Button({
+        image: 'images/help.png',
+        label: {set:'Examples',key:'dialog',value:'btnConfirm'},
+        onClick: d5.open.bind(d5)
+    }).addTo('confirmDialogButton');
+
+    /**
+     * Message Dialog with localized Message
+     */
+    d6 = new Jx.Dialog.Message({
+        image   : 'images/world.png',
+        // set the moving limit of a dialog to the id of a DOM element
+        limit: 'confirmDialog',
+        message : {set:'Examples',key:'dialog',value:'dialogMessage'}
+    });
+
+    new Jx.Button({
+        image: 'images/world.png',
+        label: {set:'Examples',key:'dialog',value:'btnMessage'},
+        onClick: d6.open.bind(d6)
+    }).addTo('confirmDialogButton');
+
+    /**
+     * Message Dialog with an html Element that is injected inside the dialog
+     */
+    d7 = new Jx.Dialog.Message({
+        image   : 'images/exclamation.png',
+        message : $('warningMessage'),
+        onClose : function() {
+          log("you closed the message");
+        }
+    });
+
+    new Jx.Button({
+        image: 'images/exclamation.png',
+        label: 'Inline HTML Message',
+        onClick: d7.open.bind(d7)
+    }).addTo('confirmDialogButton');
+}
+</script>
+<script type="text/javascript" id="promptDialogScript">
+function drawPromptDialog() {
+    /**
+     * Prompt Dialog in default state with a Jx.Field.Text and an email validator
+     */
+    d8 = new Jx.Dialog.Prompt({
+        image: 'images/help.png',
+        // set limit any DOM element reference: here the tab's panel content'
+        limit: $('basicDialog').getParent('div.jxPanelContentContainer'),
+        prompt: {set:'Examples',key:'dialog',value:'dialogPrompt'},
+        fieldOptions: {
+          validatorOptions: {
+            validators: ['required','validate-email']
+          }
+        },
+        onClose : function(dialog, buttonValue, fieldValue) {
+          log("You pressed " + buttonValue + ". Field value is " + fieldValue);
+        }
+    });
+    new Jx.Button({
+        image: 'images/help.png',
+        label: {set:'Examples',key:'dialog',value:'btnPrompt'},
+        onClick: d8.open.bind(d8)
+    }).addTo('promptDialogButton');
+
+    /**
+     * Prompt Dialog with a Textarea and another validator
+     */
+    d9 = new Jx.Dialog.Prompt({
+        image: 'images/page_white_text.png',
+        prompt: 'Enter at least 50 characters',
+        fieldOptions: {
+          type: 'Textarea',
+          validatorOptions: {
+            validators: ['required','minLength:50']
+          }
+        },
+        onClose : function(dialog, buttonValue, fieldValue) {
+          log("You pressed " + buttonValue + ". Field value is " + fieldValue);
+        }
+    });
+    new Jx.Button({
+        image: 'images/page_white_text.png',
+        label: 'Prompt Textarea',
+        onClick: d9.open.bind(d9)
+    }).addTo('promptDialogButton');
+
+    /**
+     * Prompt Dialog with a reference to Jx.Field.Select.
+     * The label of a referenced field overwrites the prompt message of
+     * Dialog.Prompt options.
+     */
+    var selectField = new Jx.Field.Select({
+                        label : 'Select anything',
+                        containerClass : 'jxPrompt',
+                        comboOpts : [
+                          {value : '', text:'', selected: true},
+                          {value : 'abc', text:'ABC      ', selected: false},
+                          {value : 'def', text:'DEF      ', selected: false},
+                          {value : 'ghi', text:'GHI      ', selected: false},
+                          {value : 'jkl', text:'JKL      ', selected: false},
+                          {value : 'mno', text:'MNO      ', selected: false},
+                          {value : 'pqr', text:'PQR      ', selected: false},
+                          {value : 'stu', text:'STU      ', selected: false},
+                          {value : 'vwx', text:'VWX      ', selected: false},
+                          {value : 'yz', text:'YZ      ', selected: false}
+                        ]
+                      });
+    
+    d10 = new Jx.Dialog.Prompt({
+        image: 'images/script.png',
+        prompt: 'Select something',
+        fieldOptions: {
+          type: selectField,
+          validatorOptions: {
+            validators: ['required']
+          }
+        },
+        onClose : function(dialog, buttonValue, fieldValue) {
+          log("You pressed " + buttonValue + ". Field value is " + fieldValue);
+        }
+    });
+    new Jx.Button({
+        image: 'images/script.png',
+        label: 'Prompt Select',
+        onClick: d10.open.bind(d10)
+    }).addTo('promptDialogButton');
+}
+</script>
+</head>
+<body>
+<h1>Jx.Dialog Examples</h1>
+<h2 id="basicDialog">Basic Dialog</h2>
+<p>This is a basic dialog that uses inline content.  Its static on the page (you can't do anything but close it).</p>
+<div id="basicDialogButton" class="buttonBox"></div>
+
+<h2 id="positionedDialog">Positioning Dialog</h2>
+<p>This dialog is modal and has an initial position other than the default centering logic.  It is also resizable, movable, and can be maximized.</p>
+<div id="positionedDialogButton" class="buttonBox"></div>
+
+<h2 id="toolbarDialog">Toolbars in Dialogs</h2>
+<p>Dialogs can also contain toolbars in any of the four sides of the content area.  This dialog also demonstrates loading content from a URL and processing it after it has loaded.  It also tries some other positioning logic.</p>
+<div id="toolbarDialogButton" class="buttonBox"></div>
+
+<h2 id="ajaxFailedDialog">Ajax Content Fails to Load</h2>
+<p>If dialog content fails to load, you can trap that error and do something useful for the user.</p>
+<div id="ajaxFailedDialogButton" class="buttonBox"></div>
+
+<h2 id="confirmDialog">Confirm &amp; Message Dialog</h2>
+<p>The Dialog can also be an alternative to window.confirm() or alert().</p>
+<div id="confirmDialogButton" class="buttonBox"></div>
+
+<h2 id="promptDialog">Prompt Dialog</h2>
+<p>Some examples of a custom window.prompt() dialog that can be configured in many ways.</p>
+<div id="promptDialogButton" class="buttonBox"></div>
+
+<div id="inlineContent">
+  <h3>Inline Content</h3>
+  <p>This content is loaded by specifying the id of the element to use in the dialog.  The dialog should be modal and start at a specific location (200 pixels from left of modal background, 100 pixels from top).  The content background is white because the content itself has a background color style.</p>
+</div>
+
+<div id="warningMessage">
+  <h3 style="text-align: left;">
+    <img src="images/exclamation.png" alt="Warning" /> Warning! You pressed a button!
+  </h3>
+</div>
+
+</body>
+</html>

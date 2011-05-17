@@ -1,0 +1,191 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>Jx.Tree Test Page</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="../../lib/mootools-core.js"></script>
+<script type="text/javascript" src="../../lib/mootools-more.js"></script>
+<script type="text/javascript" src="../../lib/jxlib.standalone.uncompressed.js"></script>
+<script src="js/tests.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/locale.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">
+window.addEvent('load', function() {
+    basicTree();
+    customTree();
+});
+if($(document).getElements('.tabContentActiveExamples').length > 0) {
+  $(document).getElements('.tabContentActiveExamples')[0].addEvent('loadAjax', function() {
+    basicTree();
+    customTree();
+  });
+}
+</script>
+
+<script id="basicTreeScript" type="text/javascript">
+function basicTree() {
+    var cm = new Jx.Menu.Context();
+    var mi = new Jx.Menu.Item({
+      label:'test',
+      onClick: function() {
+        var p = this;
+        while (p.owner) {
+          p = p.owner;
+        }
+        var item = $jx(p.target);
+        console.dir(item);
+      }
+    });
+    cm.add(mi);
+
+    /* the tree object goes in a div */
+    var tree = new Jx.Tree({
+        parent: 'treeArea',
+        onAdd: function(item) {
+         log('item added: ' + item.getName());
+        },
+        onRemove: function(item) {
+         log('item removed: ' + item.getName());
+        },
+        onDisclose: function(item) {
+         log('item disclosed: ' + item.getName());
+        },
+        onSelect: function(item) {
+         log('item selected: '+item.options.label);
+        },
+        onUnselect: function(item) {
+         log('item unselected: '+item.options.label);
+        }
+    });
+
+    /* you can put an item right into the tree */
+    var item = new Jx.TreeItem({
+        label: {set:'Examples',key:'tree',value:'customIcon'},
+        selectable: false,
+        image: 'images/bug.png',
+        onClick: function() {
+            log('you clicked the bug!');
+        },
+        contextMenu: cm
+    });
+    tree.add(item);
+    
+    /* add a folder to the tree */
+    var folder = new Jx.TreeFolder({
+        label: {set:'Examples',key:'tree',value:'customFolder'},
+        image: 'images/blue_folder.png',
+        imageClass: 'blueFolder',
+        enabled: false,
+        contextMenu: cm
+    });
+    tree.add(folder);
+    
+    /* put an item into the folder */
+    var item = new Jx.TreeItem({
+        label: {set:'Examples',key:'tree',value:'subItem'}
+    });
+    folder.add(item);
+    
+    /* you can put a folder into a folder */
+    var subFolder = new Jx.TreeFolder({label: {set:'Examples',key:'tree',value:'subFolder'}});
+    folder.add(subFolder);
+
+    /* and items into that too! */
+    var item = new Jx.TreeItem({label: {set:'Examples',key:'tree',value:'subItem2'}});
+    subFolder.add(item);
+    
+    /* add a lot more stuff */
+    for (var j=1; j<4; j++) {
+        var folder = new Jx.TreeFolder({
+          label: function(j) {
+            return MooTools.lang.get('Examples', 'tree').item + j;
+          }.bind(folder, [j])
+        });
+        tree.add(folder);
+        for (var i=1; i<10; i++) {
+            var item = new Jx.TreeItem({
+              label: function(i,j) {
+                return MooTools.lang.get('Examples', 'tree').folder + j +"."+ i;
+              }.bind(item, [i,j])
+            });
+            folder.add(item);
+        }        
+    }    
+};
+</script>
+
+<script id="customTreeScript" type="text/javascript">
+function customTree() {
+    /* the tree object goes in a div */
+   var root = new Jx.Tree({parent: 'treeArea2'});
+   
+   var tree = new Jx.TreeFolder({label: 'root test'});
+   
+   root.add(tree);
+   
+   Jx.TreeItem.Check = new Class({
+     Extends: Jx.TreeItem,
+     options: {
+       template:'<li class="jxTreeContainer jxTreeLeaf"><img class="jxTreeImage" src="'+Jx.aPixel.src+'" alt="" title=""><a class="jxTreeItem" href="javascript:void(0);"><img class="jxTreeIcon" src="'+Jx.aPixel.src+'" alt="" title=""><span class="jxTreeLabel"></span><input type="checkbox"></a></li>'
+     }
+   });
+   
+   /* you can put an item right into the tree */
+    var item = new Jx.TreeItem.Check({
+        label: 'Tree Item with checkbox'
+    });
+    tree.add(item);
+    
+    /* add a folder to the tree */
+    var folder = new Jx.TreeFolder({
+        label: 'Tree folder with custom icon',
+        image: 'images/blue_folder.png',
+        imageClass: 'blueFolder'
+    });
+    tree.add(folder);
+    
+    /* put an item into the folder */
+    var item = new Jx.TreeItem.Check({
+        label: 'A Sub Item'
+    });
+    folder.add(item);
+    
+    /* you can put a folder into a folder */
+    var subFolder = new Jx.TreeFolder({label: 'A Sub Folder'});
+    folder.add(subFolder);
+
+    /* and items into that too! */
+    var item = new Jx.TreeItem.Check({label: 'Another Sub Item'});
+    subFolder.add(item);
+    
+    /* add a lot more stuff */
+    for (var j=1; j<4; j++) {
+        var folder = new Jx.TreeFolder({label: 'Folder ' + j});
+        tree.add(folder);
+        for (var i=1; i<10; i++) {
+            var item = new Jx.TreeItem.Check({label: 'Item ' + i});
+            folder.add(item);
+        }        
+    }    
+};
+</script>
+
+<style>
+.jxTreeItem input {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+}
+</style>
+
+</head>
+<body>
+<h1>Jx.Tree Examples</h1>
+<p>API Reference: <a id="tree-js" href="javascript:void();" title="link to API Reference">Jx.Tree</a>, <a id="treefolder-js" href="javascript:void();" title="link to API Reference">Jx.TreeFolder</a>, <a id="treeitem-js" href="javascript:void();" title="link to API Reference">Jx.TreeItem</a></p>
+<h2 id="basicTree">Basic Tree (localized)</h2>
+<p>A tree is a component that organizes items into folders and sub folders, allowing the user to open and close the folders as needed to find them.</p>
+<div id="treeArea" class="treeBox"></div>
+<h2 id="customTree">Custom Tree Items</h2>
+<p>Use the new templating support to modify tree items to include a checkbox.</p>
+<div id="treeArea2" class="treeBox"></div>
+</body>
+</html>
