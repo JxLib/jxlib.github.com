@@ -3,57 +3,68 @@
 
 script: Fx.SmoothScroll.js
 
+name: Fx.SmoothScroll
+
 description: Class for creating a smooth scrolling effect to all internal links on the page.
 
 license: MIT-style license
 
 authors:
- - Valerio Proietti
+  - Valerio Proietti
 
 requires:
- - core:1.2.4/Selectors
- - /Fx.Scroll
+  - Core/Slick.Finder
+  - /Fx.Scroll
 
 provides: [Fx.SmoothScroll]
 
 ...
 */
 
-var SmoothScroll = Fx.SmoothScroll = new Class({
+/*<1.2compat>*/var SmoothScroll = /*</1.2compat>*/Fx.SmoothScroll = new Class({
 
 	Extends: Fx.Scroll,
+
+	options: {
+		axes: ['x', 'y']
+	},
 
 	initialize: function(options, context){
 		context = context || document;
 		this.doc = context.getDocument();
-		var win = context.getWindow();
 		this.parent(this.doc, options);
-		this.links = $$(this.options.links || this.doc.links);
-		var location = win.location.href.match(/^[^#]*/)[0] + '#';
-		this.links.each(function(link){
-			if (link.href.indexOf(location) != 0) {return;}
+
+		var win = context.getWindow(),
+			location = win.location.href.match(/^[^#]*/)[0] + '#',
+			links = $$(this.options.links || this.doc.links);
+
+		links.each(function(link){
+			if (link.href.indexOf(location) != 0) return;
 			var anchor = link.href.substr(location.length);
 			if (anchor) this.useLink(link, anchor);
 		}, this);
-		if (!Browser.Engine.webkit419) {
-			this.addEvent('complete', function(){
-				win.location.hash = this.anchor;
-			}, true);
-		}
+
+		this.addEvent('complete', function(){
+			win.location.hash = this.anchor;
+			this.element.scrollTo(this.to[0], this.to[1]);
+		}, true);
 	},
 
 	useLink: function(link, anchor){
-		var el;
+
 		link.addEvent('click', function(event){
-			if (el !== false && !el) el = document.id(anchor) || this.doc.getElement('a[name=' + anchor + ']');
-			if (el) {
-				event.preventDefault();
-				this.anchor = anchor;
-				this.toElement(el).chain(function(){
-					this.fireEvent('scrolledTo', [link, el]);
-				}.bind(this));
-				link.blur();
-			}
+			var el = document.id(anchor) || this.doc.getElement('a[name=' + anchor + ']');
+			if (!el) return;
+
+			event.preventDefault();
+			this.toElement(el, this.options.axes).chain(function(){
+				this.fireEvent('scrolledTo', [link, el]);
+			}.bind(this));
+
+			this.anchor = anchor;
+
 		}.bind(this));
+
+		return this;
 	}
 });

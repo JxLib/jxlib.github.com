@@ -1,27 +1,27 @@
 /*
 ---
 
-script: Swiff.js
+name: Swiff
 
 description: Wrapper for embedding SWF movies. Supports External Interface Communication.
 
 license: MIT-style license.
 
-credits: 
-- Flash detection & Internet Explorer + Flash Player 9 fix inspired by SWFObject.
+credits:
+  - Flash detection & Internet Explorer + Flash Player 9 fix inspired by SWFObject.
 
-requires:
-- /Options
-- /$util
+requires: [Options, Object, Element]
 
-provides: [Swiff]
+provides: Swiff
 
 ...
 */
 
-var Swiff = new Class({
+(function(){
 
-	Implements: [Options],
+var Swiff = this.Swiff = new Class({
+
+	Implements: Options,
 
 	options: {
 		id: null,
@@ -32,7 +32,7 @@ var Swiff = new Class({
 		params: {
 			quality: 'high',
 			allowScriptAccess: 'always',
-			wMode: 'transparent',
+			wMode: 'window',
 			swLiveConnect: true
 		},
 		callBacks: {},
@@ -44,7 +44,7 @@ var Swiff = new Class({
 	},
 
 	initialize: function(path, options){
-		this.instance = 'Swiff_' + $time();
+		this.instance = 'Swiff_' + String.uniqueID();
 
 		this.setOptions(options);
 		options = this.options;
@@ -54,7 +54,7 @@ var Swiff = new Class({
 		Swiff.CallBacks[this.instance] = {};
 
 		var params = options.params, vars = options.vars, callBacks = options.callBacks;
-		var properties = $extend({height: options.height, width: options.width}, options.properties);
+		var properties = Object.append({height: options.height, width: options.width}, options.properties);
 
 		var self = this;
 
@@ -67,14 +67,15 @@ var Swiff = new Class({
 			vars[callBack] = 'Swiff.CallBacks.' + this.instance + '.' + callBack;
 		}
 
-		params.flashVars = Hash.toQueryString(vars);
-		if (Browser.Engine.trident){
+		params.flashVars = Object.toQueryString(vars);
+		if (Browser.ie){
 			properties.classid = 'clsid:D27CDB6E-AE6D-11cf-96B8-444553540000';
 			params.movie = path;
 		} else {
 			properties.type = 'application/x-shockwave-flash';
-			properties.data = path;
 		}
+		properties.data = path;
+
 		var build = '<object id="' + id + '"';
 		for (var property in properties) build += ' ' + property + '="' + properties[property] + '"';
 		build += '>';
@@ -97,7 +98,7 @@ var Swiff = new Class({
 	},
 
 	remote: function(){
-		return Swiff.remote.apply(Swiff, [this.toElement()].extend(arguments));
+		return Swiff.remote.apply(Swiff, [this.toElement()].append(arguments));
 	}
 
 });
@@ -108,3 +109,5 @@ Swiff.remote = function(obj, fn){
 	var rs = obj.CallFunction('<invoke name="' + fn + '" returntype="javascript">' + __flash__argumentsToXML(arguments, 2) + '</invoke>');
 	return eval(rs);
 };
+
+})();

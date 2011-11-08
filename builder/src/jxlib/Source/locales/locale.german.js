@@ -7,19 +7,19 @@ description: Default translations of text strings used in JX for German (Germany
 license: MIT-style license.
 
 requires:
- - More/Lang
+ - More/Locale
 
 provides: [Locale.German]
 
 ...
  */
 
-MooTools.lang.set('de-DE', 'Date', {
+Locale.define('de-DE', 'Date', {
   // need to overwrite 'M&auml;rz' to 'März' for jx.select fields
   months: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember']
 });
 
-MooTools.lang.set('de-DE', 'Jx', {
+Locale.define('de-DE', 'Jx', {
 
 	'widget': {
 		busyMessage: 'Arbeite ...'
@@ -40,16 +40,18 @@ MooTools.lang.set('de-DE', 'Jx', {
 	file: {
 		browseLabel: 'Durchsuchen...'
 	},
-	'formatter.boolean': {
-		'true': 'Ja',
-		'false': 'Nein'
-	},
-	'formatter.currency': {
-		sign: '€'
-	},
-	'formatter.number': {
-		decimalSeparator: ',',
-    thousandsSeparator: '.'
+	'formatter' : {
+        'boolean': {
+		    'true': 'Ja',
+	        'false': 'Nein'
+	    },
+	    'currency': {
+		    sign: '€'
+	    },
+	    'number': {
+		    decimalSeparator: ',',
+            thousandsSeparator: '.'
+	    }
 	},
 	splitter: {
 		barToolTip: 'Ziehen Sie diese Leiste um die Größe zu verändern'
@@ -85,11 +87,13 @@ MooTools.lang.set('de-DE', 'Jx', {
 	upload: {
 		buttonText: 'Dateien hochladen'
 	},
-	'plugin.resize': {
-	  tooltip: 'Klicken um Größe zu verändern. Doppelklick für automatische Anpassung.'
-	},
-  'plugin.editor': {
-    submitButton: 'Speichern',
-    cancelButton: 'Abbrechen'
-  }
+	'plugin': {
+        'resize': {
+	        tooltip: 'Klicken um Größe zu verändern. Doppelklick für automatische Anpassung.'
+	    },
+        'editor': {
+            submitButton: 'Speichern',
+            cancelButton: 'Abbrechen'
+        }
+	}
 });

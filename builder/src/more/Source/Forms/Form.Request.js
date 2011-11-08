@@ -3,20 +3,22 @@
 
 script: Form.Request.js
 
+name: Form.Request
+
 description: Handles the basic functionality of submitting a form and updating a dom element with the result.
 
 license: MIT-style license
 
 authors:
- - Aaron Newton
+  - Aaron Newton
 
 requires:
- - core:1.2.4/Element.Event
- - core:1.2.4/Request.HTML
- - /Class.Binds
- - /Class.Occlude
- - /Spinner
- - /String.QueryString
+  - Core/Request.HTML
+  - /Class.Binds
+  - /Class.Occlude
+  - /Spinner
+  - /String.QueryString
+  - /Element.Delegation
 
 provides: [Form.Request]
 
@@ -33,152 +35,169 @@ if (!window.Form) window.Form = {};
 
 		Implements: [Options, Events, Class.Occlude],
 
-		options: {
-			//onFailure: $empty,
-			//onSuccess: #empty, //aliased to onComplete,
-			//onSend: $empty
+		options: {/*
+			onFailure: function(){},
+			onSuccess: function(){}, // aliased to onComplete,
+			onSend: function(){}*/
 			requestOptions: {
 				evalScripts: true,
 				useSpinner: true,
 				emulation: false,
 				link: 'ignore'
 			},
+			sendButtonClicked: true,
 			extraData: {},
 			resetForm: true
 		},
 
 		property: 'form.request',
 
-		initialize: function(form, update, options) {
+		initialize: function(form, target, options){
 			this.element = document.id(form);
 			if (this.occlude()) return this.occluded;
-			this.update = document.id(update);
-			this.setOptions(options);
-			this.makeRequest();
-			if (this.options.resetForm) {
-				this.request.addEvent('success', function(){
-					$try(function(){ this.element.reset(); }.bind(this));
-					if (window.OverText) OverText.update();
-				}.bind(this));
-			}
-			this.attach();
+			this.setOptions(options)
+				.setTarget(target)
+				.attach();
 		},
 
-		toElement: function() {
+		setTarget: function(target){
+			this.target = document.id(target);
+			if (!this.request){
+				this.makeRequest();
+			} else {
+				this.request.setOptions({
+					update: this.target
+				});
+			}
+			return this;
+		},
+
+		toElement: function(){
 			return this.element;
 		},
 
 		makeRequest: function(){
-			this.request = new Request.HTML($merge({
-					update: this.update,
+			var self = this;
+			this.request = new Request.HTML(Object.merge({
+					update: this.target,
 					emulation: false,
 					spinnerTarget: this.element,
 					method: this.element.get('method') || 'post'
 			}, this.options.requestOptions)).addEvents({
-				success: function(text, xml){
+				success: function(tree, elements, html, javascript){
 					['complete', 'success'].each(function(evt){
-						this.fireEvent(evt, [this.update, text, xml]);
-					}, this);
-				}.bind(this),
-				failure: function(xhr){
-					this.fireEvent('complete').fireEvent('failure', xhr);
-				}.bind(this),
+						self.fireEvent(evt, [self.target, tree, elements, html, javascript]);
+					});
+				},
+				failure: function(){
+					self.fireEvent('complete', arguments).fireEvent('failure', arguments);
+				},
 				exception: function(){
-					this.fireEvent('failure', xhr);
-				}.bind(this)
+					self.fireEvent('failure', arguments);
+				}
 			});
+			return this.attachReset();
+		},
+
+		attachReset: function(){
+			if (!this.options.resetForm) return this;
+			this.request.addEvent('success', function(){
+				Function.attempt(function(){
+					this.element.reset();
+				}.bind(this));
+				if (window.OverText) OverText.update();
+			}.bind(this));
+			return this;
 		},
 
 		attach: function(attach){
-			attach = $pick(attach, true);
-			method = attach ? 'addEvent' : 'removeEvent';
-			
+			var method = (attach != false) ? 'addEvent' : 'removeEvent';
+			this.element[method]('click:relay(button, input[type=submit])', this.saveClickedButton.bind(this));
+
 			var fv = this.element.retrieve('validator');
 			if (fv) fv[method]('onFormValidate', this.onFormValidate);
-			if (!fv || !attach) this.element[method]('submit', this.onSubmit);
+			else this.element[method]('submit', this.onSubmit);
+
+			return this;
 		},
 
 		detach: function(){
-			this.attach(false);
+			return this.attach(false);
 		},
 
 		//public method
 		enable: function(){
-			this.attach();
+			return this.attach();
 		},
 
 		//public method
 		disable: function(){
-			this.detach();
+			return this.detach();
 		},
 
-		onFormValidate: function(valid, form, e) {
+		onFormValidate: function(valid, form, event){
+			//if there's no event, then this wasn't a submit event
+			if (!event) return;
 			var fv = this.element.retrieve('validator');
-			if (valid || (fv && !fv.options.stopOnFailure)) {
-				if (e && e.stop) e.stop();
+			if (valid || (fv && !fv.options.stopOnFailure)){
+				event.stop();
 				this.send();
 			}
 		},
 
-		onSubmit: function(e){
-			if (this.element.retrieve('validator')) {
+		onSubmit: function(event){
+			var fv = this.element.retrieve('validator');
+			if (fv){
 				//form validator was created after Form.Request
-				this.detach();
+				this.element.removeEvent('submit', this.onSubmit);
+				fv.addEvent('onFormValidate', this.onFormValidate);
+				this.element.validate();
 				return;
 			}
-			e.stop();
+			if (event) event.stop();
 			this.send();
 		},
 
+		saveClickedButton: function(event, target){
+			var targetName = target.get('name');
+			if (!targetName || !this.options.sendButtonClicked) return;
+			this.options.extraData[targetName] = target.get('value') || true;
+			this.clickedCleaner = function(){
+				delete this.options.extraData[targetName];
+				this.clickedCleaner = function(){};
+			}.bind(this);
+		},
+
+		clickedCleaner: function(){},
+
 		send: function(){
-			var str = this.element.toQueryString().trim();
-			var data = $H(this.options.extraData).toQueryString();
+			var str = this.element.toQueryString().trim(),
+				data = Object.toQueryString(this.options.extraData);
+
 			if (str) str += "&" + data;
 			else str = data;
+
 			this.fireEvent('send', [this.element, str.parseQueryString()]);
-			this.request.send({data: str, url: this.element.get("action")});
+			this.request.send({
+				data: str,
+				url: this.options.requestOptions.url || this.element.get('action')
+			});
+			this.clickedCleaner();
 			return this;
 		}
 
 	});
 
-	Element.Properties.formRequest = {
-
-		set: function(){
-			var opt = Array.link(arguments, {options: Object.type, update: Element.type, updateId: String.type});
-			var update = opt.update || opt.updateId;
-			var updater = this.retrieve('form.request');
-			if (update) {
-				if (updater) updater.update = document.id(update);
-				this.store('form.request:update', update);
-			}
-			if (opt.options) {
-				if (updater) updater.setOptions(opt.options);
-				this.store('form.request:options', opt.options);
-			}
-			return this;
-		},
-
-		get: function(){
-			var opt = Array.link(arguments, {options: Object.type, update: Element.type, updateId: String.type});
-			var update = opt.update || opt.updateId;
-			if (opt.options || update || !this.retrieve('form.request')){
-				if (opt.options || !this.retrieve('form.request:options')) this.set('form.request', opt.options);
-				if (update) this.set('form.request', update);
-				this.store('form.request', new Form.Request(this, this.retrieve('form.request:update'), this.retrieve('form.request:options')));
-			}
-			return this.retrieve('form.request');
+	Element.implement('formUpdate', function(update, options){
+		var fq = this.retrieve('form.request');
+		if (!fq){
+			fq = new Form.Request(this, update, options);
+		} else {
+			if (update) fq.setTarget(update);
+			if (options) fq.setOptions(options).makeRequest();
 		}
-
-	};
-
-	Element.implement({
-
-		formUpdate: function(update, options){
-			this.get('form.request', update, options).send();
-			return this;
-		}
-
+		fq.send();
+		return this;
 	});
 
 })();

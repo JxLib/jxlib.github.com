@@ -3,17 +3,19 @@
 
 script: HtmlTable.js
 
+name: HtmlTable
+
 description: Builds table elements with methods to add rows.
 
 license: MIT-style license
 
 authors:
- - Aaron Newton
+  - Aaron Newton
 
 requires:
- - core:1.2.4/Options
- - core:1.2.4/Events
- - /Class.Occlude
+  - Core/Options
+  - Core/Events
+  - /Class.Occlude
 
 provides: [HtmlTable]
 
@@ -38,8 +40,9 @@ var HtmlTable = new Class({
 	property: 'HtmlTable',
 
 	initialize: function(){
-		var params = Array.link(arguments, {options: Object.type, table: Element.type});
+		var params = Array.link(arguments, {options: Type.isObject, table: Type.isElement, id: Type.isString});
 		this.setOptions(params.options);
+		if (!params.table && params.id) params.table = document.id(params.id);
 		this.element = params.table || new Element('table', this.options.properties);
 		if (this.occlude()) return this.occluded;
 		this.build();
@@ -53,18 +56,15 @@ var HtmlTable = new Class({
 
 		if (this.options.headers.length) this.setHeaders(this.options.headers);
 		else this.thead = document.id(this.element.tHead);
-		if (this.thead) this.head = document.id(this.thead.rows[0]);
 
+		if (this.thead) this.head = this.getHead();
 		if (this.options.footers.length) this.setFooters(this.options.footers);
+
 		this.tfoot = document.id(this.element.tFoot);
-		if (this.tfoot) this.foot = document.id(this.thead.rows[0]);
+		if (this.tfoot) this.foot = document.id(this.tfoot.rows[0]);
 
 		this.options.rows.each(function(row){
 			this.push(row);
-		}, this);
-
-		['adopt', 'inject', 'wraps', 'grab', 'replaces', 'dispose'].each(function(method){
-				this[method] = this.element[method].bind(this.element);
 		}, this);
 	},
 
@@ -77,13 +77,22 @@ var HtmlTable = new Class({
 		return this;
 	},
 
-	set: function(what, items) {
-		var target = (what == 'headers') ? 'tHead' : 'tFoot';
-		this[target.toLowerCase()] = (document.id(this.element[target]) || new Element(target.toLowerCase()).inject(this.element, 'top')).empty();
-		var data = this.push(items, {}, this[target.toLowerCase()], what == 'headers' ? 'th' : 'td');
-		if (what == 'headers') this.head = document.id(this.thead.rows[0]);
-		else this.foot = document.id(this.thead.rows[0]);
+	set: function(what, items){
+		var target = (what == 'headers') ? 'tHead' : 'tFoot',
+			lower = target.toLowerCase();
+
+		this[lower] = (document.id(this.element[target]) || new Element(lower).inject(this.element, 'top')).empty();
+		var data = this.push(items, {}, this[lower], what == 'headers' ? 'th' : 'td');
+
+		if (what == 'headers') this.head = this.getHead();
+		else this.foot = this.getHead();
+
 		return data;
+	},
+
+	getHead: function(){
+		var rows = this.thead.rows;
+		return rows.length > 1 ? $$(rows) : rows.length ? document.id(rows[0]) : false;
 	},
 
 	setHeaders: function(headers){
@@ -96,21 +105,53 @@ var HtmlTable = new Class({
 		return this;
 	},
 
-	push: function(row, rowProperties, target, tag){
-		var tds = row.map(function(data){
-			var td = new Element(tag || 'td', data.properties),
-				type = data.content || data || '',
-				element = document.id(type);
-			if($type(type) != 'string' && element) td.adopt(element);
-			else td.set('html', type);
+	update: function(tr, row, tag){
+		var tds = tr.getChildren(tag || 'td'), last = tds.length - 1;
 
-			return td;
+		row.each(function(data, index){
+			var td = tds[index] || new Element(tag || 'td').inject(tr),
+				content = (data ? data.content : '') || data,
+				type = typeOf(content);
+
+			if (data && data.properties) td.set(data.properties);
+			if (/(element(s?)|array|collection)/.test(type)) td.empty().adopt(content);
+			else td.set('html', content);
+
+			if (index > last) tds.push(td);
+			else tds[index] = td;
 		});
 
 		return {
-			tr: new Element('tr', rowProperties).inject(target || this.body).adopt(tds),
+			tr: tr,
 			tds: tds
 		};
+	},
+
+	push: function(row, rowProperties, target, tag, where){
+		if (typeOf(row) == 'element' && row.get('tag') == 'tr'){
+			row.inject(target || this.body, where);
+			return {
+				tr: row,
+				tds: row.getChildren('td')
+			};
+		}
+		return this.update(new Element('tr', rowProperties).inject(target || this.body, where), row, tag);
+	},
+
+	pushMany: function(rows, rowProperties, target, tag, where){
+		return rows.map(function(row){
+			return this.push(row, rowProperties, target, tag, where);
+		}, this);
 	}
 
 });
+
+
+['adopt', 'inject', 'wraps', 'grab', 'replaces', 'dispose'].each(function(method){
+	HtmlTable.implement(method, function(){
+		this.element[method].apply(this.element, arguments);
+		return this;
+	});
+});
+
+

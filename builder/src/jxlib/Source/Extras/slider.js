@@ -27,8 +27,8 @@ css:
  * License: MIT-style
  */
 Jx.Slider = new Class({
-    Family: 'Jx.Slider',
     Extends: Jx.Widget,
+    Family: 'Jx.Slider',
 
     options: {
         /**
@@ -78,16 +78,17 @@ Jx.Slider = new Class({
          *
          */
         offset: 0,
-        onChange: $empty,
-        onComplete: $empty
+        onChange: function(){},
+        onComplete: function(){}
     },
-    classes: new Hash({
+    classes: {
         domObj: 'jxSliderContainer',
         knob: 'jxSliderKnob'
-    }),
+    },
     slider: null,
     knob: null,
     sliderOpts: null,
+    disabled: false,
     /**
      * APIMethod: render
      * Create the slider but does not start it up due to issues with it
@@ -95,15 +96,6 @@ Jx.Slider = new Class({
      */
     render: function () {
         this.parent();
-        
-        /** 
-         * Not sure why this is here...
-         */
-        /**
-        if (this.domObj) {
-            return;
-        }
-        **/
 
         this.sliderOpts = {
             range: [this.options.min, this.options.max],
@@ -137,7 +129,7 @@ Jx.Slider = new Class({
      * it up and position the slider at the startAt poisition.
      */
     start: function () {
-        if (!$defined(this.slider)) {
+        if (this.slider === undefined || this.slider === null) {
             this.slider = new Slider(this.domObj, this.knob, this.sliderOpts);
         }
         this.slider.set(this.options.startAt);
@@ -148,5 +140,29 @@ Jx.Slider = new Class({
      */
     set: function(value) {
       this.slider.set(value);
+    },
+    
+    /**
+     * APIMethod: enable
+     * Use this to enable the slider if disabled.
+     */
+    enable: function(){
+        if (this.disabled) {
+            this.slider.attach();
+            this.domObj.removeClass('jxSliderDisabled');
+            this.disabled = false;
+        }
+    },
+    
+    /** 
+     * APIMethod: disable
+     * Use this to disable the slider.
+     */
+    disable: function() {
+        if (!this.disabled){
+            this.slider.detach();
+            this.domObj.addClass('jxSliderDisabled');
+            this.disabled = true;
+        }
     }
 });

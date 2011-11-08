@@ -43,8 +43,8 @@ images:
  * This file is licensed under an MIT style license
  */
 Jx.Menu = new Class({
-    Family: 'Jx.Menu',
     Extends: Jx.Widget,
+    Family: 'Jx.Menu',
     // Binds: ['onMouseEnter','onMouseLeave','hide','keypressHandler'],
     /**
      * Property: button
@@ -88,14 +88,14 @@ Jx.Menu = new Class({
         }
     },
 
-    classes: new Hash({
+    classes: {
         contentContainer: 'jxMenuContainer',
         subDomObj: 'jxMenu'
-    }),
+    },
     
     init: function() {
         this.bound.stop = function(e){e.stop();};
-        this.bound.remove = function(item) {item.setOwner(null);};
+        this.bound.remove = function(item) {if (item.setOwner) item.setOwner(null);};
         this.bound.show = this.show.bind(this);
         this.bound.mouseenter = this.onMouseEnter.bind(this);
         this.bound.mouseleave = this.onMouseLeave.bind(this);
@@ -122,7 +122,7 @@ Jx.Menu = new Class({
         /* if options are passed, make a button inside an LI so the
            menu can be embedded inside a toolbar */
         if (this.options.buttonOptions) {
-            this.button = new Jx.Button($merge(this.options.buttonOptions,{
+            this.button = new Jx.Button(Object.merge({},this.options.buttonOptions,{
                 template: this.options.buttonTemplate,
                 onClick:this.bound.show
             }));
@@ -192,10 +192,14 @@ Jx.Menu = new Class({
     add: function(item, position, owner) {
         if (Jx.type(item) == 'array') {
             item.each(function(i){
-                i.setOwner(owner||this);
+                if (i.setOwner) {
+                    i.setOwner(owner||this);
+                }
             }, this);
         } else {
-            item.setOwner(owner||this);
+            if (item.setOwner) {
+                item.setOwner(owner||this);
+            }
         }
         this.list.add(item, position);
         return this;
@@ -232,7 +236,9 @@ Jx.Menu = new Class({
         if (item.empty) {
           item.empty();
         }
-        item.setOwner(null);
+        if (item.setOwner) {
+            item.setOwner(null);
+        }
       }, this);
       this.list.empty();
     },
@@ -393,7 +399,7 @@ Jx.Menu = new Class({
         this.contentContainer.setContentBoxSize(this.subDomObj.getMarginBoxSize());
         this.showChrome(this.contentContainer);
 
-        this.position(this.contentContainer, this.domObj, $merge({
+        this.position(this.contentContainer, this.domObj, Object.merge({},{
             offsets: this.chromeOffsets
         }, this.options.position));
         this.stack(this.contentContainer);

@@ -3,18 +3,21 @@
 
 script: Request.JSONP.js
 
+name: Request.JSONP
+
 description: Defines Request.JSONP, a class for cross domain javascript via script injection.
 
 license: MIT-style license
 
 authors:
- - Aaron Newton
- - Guillermo Rauch
+  - Aaron Newton
+  - Guillermo Rauch
+  - Arian Stolwijk
 
 requires:
- - core:1.2.4/Element
- - core:1.2.4/Request
- - /Log
+  - Core/Element
+  - Core/Request
+  - MooTools.More
 
 provides: [Request.JSONP]
 
@@ -23,111 +26,114 @@ provides: [Request.JSONP]
 
 Request.JSONP = new Class({
 
-	Implements: [Chain, Events, Options, Log],
+	Implements: [Chain, Events, Options],
 
 	options: {/*
-		onRetry: $empty(intRetries),
-		onRequest: $empty(scriptElement),
-		onComplete: $empty(data),
-		onSuccess: $empty(data),
-		onCancel: $empty(),
-		log: false,
-		*/
+		onRequest: function(src, scriptElement){},
+		onComplete: function(data){},
+		onSuccess: function(data){},
+		onCancel: function(){},
+		onTimeout: function(){},
+		onError: function(){}, */
+		onRequest: function(src){
+			if (this.options.log && window.console && console.log){
+				console.log('JSONP retrieving script with url:' + src);
+			}
+		},
+		onError: function(src){
+			if (this.options.log && window.console && console.warn){
+				console.warn('JSONP '+ src +' will fail in Internet Explorer, which enforces a 2083 bytes length limit on URIs');
+			}
+		},
 		url: '',
-		data: {},
-		retries: 0,
-		timeout: 0,
-		link: 'ignore',
 		callbackKey: 'callback',
-		injectScript: document.head
+		injectScript: document.head,
+		data: '',
+		link: 'ignore',
+		timeout: 0,
+		log: false
 	},
 
 	initialize: function(options){
 		this.setOptions(options);
-		if (this.options.log) this.enableLog();
-		this.running = false;
-		this.requests = 0;
-		this.triesRemaining = [];
-	},
-
-	check: function(){
-		if (!this.running) return true;
-		switch (this.options.link){
-			case 'cancel': this.cancel(); return true;
-			case 'chain': this.chain(this.caller.bind(this, arguments)); return false;
-		}
-		return false;
 	},
 
 	send: function(options){
-		if (!$chk(arguments[1]) && !this.check(options)) return this;
+		if (!Request.prototype.check.call(this, options)) return this;
+		this.running = true;
 
-		var type = $type(options), 
-				old = this.options, 
-				index = $chk(arguments[1]) ? arguments[1] : this.requests++;
+		var type = typeOf(options);
 		if (type == 'string' || type == 'element') options = {data: options};
+		options = Object.merge(this.options, options || {});
 
-		options = $extend({data: old.data, url: old.url}, options);
+		var data = options.data;
+		switch (typeOf(data)){
+			case 'element': data = document.id(data).toQueryString(); break;
+			case 'object': case 'hash': data = Object.toQueryString(data);
+		}
 
-		if (!$chk(this.triesRemaining[index])) this.triesRemaining[index] = this.options.retries;
-		var remaining = this.triesRemaining[index];
+		var index = this.index = Request.JSONP.counter++;
 
-		(function(){
-			var script = this.getScript(options);
-			this.log('JSONP retrieving script with url: ' + script.get('src'));
-			this.fireEvent('request', script);
-			this.running = true;
+		var src = options.url +
+			(options.url.test('\\?') ? '&' :'?') +
+			(options.callbackKey) +
+			'=Request.JSONP.request_map.request_'+ index +
+			(data ? '&' + data : '');
 
-			(function(){
-				if (remaining){
-					this.triesRemaining[index] = remaining - 1;
-					if (script){
-						script.destroy();
-						this.send(options, index).fireEvent('retry', this.triesRemaining[index]);
-					}
-				} else if(script && this.options.timeout){
-					script.destroy();
-					this.cancel().fireEvent('failure');
-				}
-			}).delay(this.options.timeout, this);
-		}).delay(Browser.Engine.trident ? 50 : 0, this);
+		if (src.length > 2083) this.fireEvent('error', src);
+
+		Request.JSONP.request_map['request_' + index] = function(){
+			this.success(arguments, index);
+		}.bind(this);
+
+		var script = this.getScript(src).inject(options.injectScript);
+		this.fireEvent('request', [src, script]);
+
+		if (options.timeout) this.timeout.delay(options.timeout, this);
+
 		return this;
+	},
+
+	getScript: function(src){
+		if (!this.script) this.script = new Element('script', {
+			type: 'text/javascript',
+			async: true,
+			src: src
+		});
+		return this.script;
+	},
+
+	success: function(args, index){
+		if (!this.running) return;
+		this.clear()
+			.fireEvent('complete', args).fireEvent('success', args)
+			.callChain();
 	},
 
 	cancel: function(){
-		if (!this.running) return this;
-		this.running = false;
-		this.fireEvent('cancel');
+		if (this.running) this.clear().fireEvent('cancel');
 		return this;
 	},
 
-	getScript: function(options){
-		var index = Request.JSONP.counter,
-				data;
-		Request.JSONP.counter++;
-
-		switch ($type(options.data)){
-			case 'element': data = document.id(options.data).toQueryString(); break;
-			case 'object': case 'hash': data = Hash.toQueryString(options.data);
-		}
-
-		var src = options.url + 
-			 (options.url.test('\\?') ? '&' :'?') + 
-			 (options.callbackKey || this.options.callbackKey) + 
-			 '=Request.JSONP.request_map.request_'+ index + 
-			 (data ? '&' + data : '');
-		if (src.length > 2083) this.log('JSONP '+ src +' will fail in Internet Explorer, which enforces a 2083 bytes length limit on URIs');
-
-		var script = new Element('script', {type: 'text/javascript', src: src});
-		Request.JSONP.request_map['request_' + index] = function(){ this.success(arguments, script); }.bind(this);
-		return script.inject(this.options.injectScript);
+	isRunning: function(){
+		return !!this.running;
 	},
 
-	success: function(args, script){
-		if (script) script.destroy();
+	clear: function(){
 		this.running = false;
-		this.log('JSONP successfully retrieved: ', args);
-		this.fireEvent('complete', args).fireEvent('success', args).callChain();
+		if (this.script){
+			this.script.destroy();
+			this.script = null;
+		}
+		return this;
+	},
+
+	timeout: function(){
+		if (this.running){
+			this.running = false;
+			this.fireEvent('timeout', [this.script.get('src'), this.script]).fireEvent('failure').cancel();
+		}
+		return this;
 	}
 
 });

@@ -1,14 +1,13 @@
 /*
 ---
 
-script: Fx.Tween.js
+name: Fx.Tween
 
 description: Formerly Fx.Style, effect to transition any CSS property for an element.
 
 license: MIT-style license.
 
-requires: 
-- /Fx.CSS
+requires: Fx.CSS
 
 provides: [Fx.Tween, Element.fade, Element.highlight]
 
@@ -46,17 +45,17 @@ Fx.Tween = new Class({
 Element.Properties.tween = {
 
 	set: function(options){
-		var tween = this.retrieve('tween');
-		if (tween) tween.cancel();
-		return this.eliminate('tween').store('tween:options', $extend({link: 'cancel'}, options));
+		this.get('tween').cancel().setOptions(options);
+		return this;
 	},
 
-	get: function(options){
-		if (options || !this.retrieve('tween')){
-			if (options || !this.retrieve('tween:options')) this.set('tween', options);
-			this.store('tween', new Fx.Tween(this, this.retrieve('tween:options')));
+	get: function(){
+		var tween = this.retrieve('tween');
+		if (!tween){
+			tween = new Fx.Tween(this, {link: 'cancel'});
+			this.store('tween', tween);
 		}
-		return this.retrieve('tween');
+		return tween;
 	}
 
 };
@@ -64,27 +63,33 @@ Element.Properties.tween = {
 Element.implement({
 
 	tween: function(property, from, to){
-		this.get('tween').start(arguments);
+		this.get('tween').start(property, from, to);
 		return this;
 	},
 
 	fade: function(how){
-		var fade = this.get('tween'), o = 'opacity', toggle;
-		how = $pick(how, 'toggle');
+		var fade = this.get('tween'), method, to, toggle;
+		if (how == null) how = 'toggle';
 		switch (how){
-			case 'in': fade.start(o, 1); break;
-			case 'out': fade.start(o, 0); break;
-			case 'show': fade.set(o, 1); break;
-			case 'hide': fade.set(o, 0); break;
+			case 'in': method = 'start'; to = 1; break;
+			case 'out': method = 'start'; to = 0; break;
+			case 'show': method = 'set'; to = 1; break;
+			case 'hide': method = 'set'; to = 0; break;
 			case 'toggle':
-				var flag = this.retrieve('fade:flag', this.get('opacity') == 1);
-				fade.start(o, (flag) ? 0 : 1);
+				var flag = this.retrieve('fade:flag', this.getStyle('opacity') == 1);
+				method = 'start';
+				to = flag ? 0 : 1;
 				this.store('fade:flag', !flag);
 				toggle = true;
 			break;
-			default: fade.start(o, arguments);
+			default: method = 'start'; to = how;
 		}
 		if (!toggle) this.eliminate('fade:flag');
+		fade[method]('opacity', to);
+		if (method == 'set' || to != 0) this.setStyle('visibility', to == 0 ? 'hidden' : 'visible');
+		else fade.chain(function(){
+			this.element.setStyle('visibility', 'hidden');
+		});
 		return this;
 	},
 

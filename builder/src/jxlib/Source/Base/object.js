@@ -229,9 +229,17 @@ Jx.Object = new Class({
     },
 
     bound: null,
+    /**
+     * APIProperty: ready
+     * Indicator if this object has completed through the initialize pipeline
+     * and is ready to be used. Plugins can check this when attaching to 
+     * determine if they need to listen for the postInit event to do additional
+     * work or just do that work straight away.
+     */
+    ready: null,
 
     initialize: function(){
-        this.plugins = new Hash();
+        this.plugins = {};
         this.bound = {};
         //normalize arguments
         var numArgs = arguments.length,
@@ -241,14 +249,13 @@ Jx.Object = new Class({
             index;
 
         if (numArgs > 0) {
-            if (numArgs === 1
-                    && (Jx.type(arguments[0])==='object' || Jx.type(arguments[0])==='Hash')
-                    && parameters.length === 1
-                    && parameters[0] === 'options') {
+            if (numArgs === 1 &&
+                    (Jx.type(arguments[0])==='object') &&
+                    parameters.length === 1 &&
+                    parameters[0] === 'options') {
                 options = arguments[0];
             } else {
                 numParams = parameters.length;
-                index;
                 if (numParams <= numArgs) {
                     index = numParams;
                 } else {
@@ -256,7 +263,7 @@ Jx.Object = new Class({
                 }
                 for (var i = 0; i < index; i++) {
                     if (parameters[i] === 'options') {
-                        $extend(options, arguments[i]);
+                        Object.append(options, arguments[i]);
                     } else {
                         options[parameters[i]] = arguments[i];
                     }
@@ -268,16 +275,30 @@ Jx.Object = new Class({
 
         this.bound.changeText = this.changeText.bind(this);
         if (this.options.useLang) {
-            MooTools.lang.addEvent('langChange', this.bound.changeText);
+            Locale.addEvent('change', this.bound.changeText);
         }
 
-        this.fireEvent('preInit');
-        this.init();
-        this.fireEvent('postInit');
+        //Changed the initPlugins() to before init and render so that 
+        //plugins can connect to preInit and postInit functions as well as 
+        //call methods before the object is completely initialized. This was
+        //done mainly so grid plugins could call want events before render time.
         this.fireEvent('prePluginInit');
         this.initPlugins();
         this.fireEvent('postPluginInit');
+        
+        //after calling initPlugins we need to remove the plugins from the
+        //options object or else every class that relies on the options will try 
+        //to initialize the same plugins. By this point all of the plugins should
+        //be registered in this.plugins.
+        delete this.options.plugins;
+        
+        this.fireEvent('preInit');
+        this.init();
+        this.fireEvent('postInit');
+        
         this.fireEvent('initializeDone');
+        
+        this.ready = true;
     },
 
     /**
@@ -288,20 +309,22 @@ Jx.Object = new Class({
         var p;
         // pluginNamespace must be defined in order to pass plugins to the
         // object
-        if ($defined(this.pluginNamespace)) {
-            if ($defined(this.options.plugins)
-                    && Jx.type(this.options.plugins) === 'array') {
+        if (this.pluginNamespace !== undefined && this.pluginNamespace !== null) {
+            if (this.options.plugins !== undefined &&
+                    this.options.plugins !== null &&
+                    Jx.type(this.options.plugins) === 'array') {
                 this.options.plugins.each(function (plugin) {
                     if (plugin instanceof Jx.Plugin) {
                         plugin.attach(this);
-                        this.plugins.set(plugin.name, plugin);
+                        this.plugins[plugin.name] = plugin;
                     } else if (Jx.type(plugin) === 'object') {
                         // All plugin-enabled objects should define a
                         // pluginNamespace member variable
                         // that is used for locating the plugins. The default
                         // namespace is 'Other' for
                         // now until we come up with a better idea
-                      if ($defined(Jx.Plugin[this.pluginNamespace][plugin.name.capitalize()])) {
+                      if (Jx.Plugin[this.pluginNamespace][plugin.name.capitalize()] !== undefined &&
+                          Jx.Plugin[this.pluginNamespace][plugin.name.capitalize()] !== null) {
                         p = new Jx.Plugin[this.pluginNamespace][plugin.name.capitalize()](plugin.options);
                       } else {
                         p = new Jx.Adaptor[this.pluginNamespace][plugin.name.capitalize()](plugin.options);
@@ -309,7 +332,8 @@ Jx.Object = new Class({
                         p.attach(this);
                     } else if (Jx.type(plugin) === 'string') {
                         //this is a name for a plugin.
-                      if ($defined(Jx.Plugin[this.pluginNamespace][plugin.capitalize()])) {
+                      if (Jx.Plugin[this.pluginNamespace][plugin.capitalize()] !== undefined &&
+                          Jx.Plugin[this.pluginNamespace][plugin.capitalize()] !== null) {
                         p = new Jx.Plugin[this.pluginNamespace][plugin.capitalize()]();
                       } else {
                         p = new Jx.Adaptor[this.pluginNamespace][plugin.capitalize()]();
@@ -320,6 +344,7 @@ Jx.Object = new Class({
             }
         }
     },
+    
 
     /**
      * APIMethod: destroy
@@ -343,14 +368,14 @@ Jx.Object = new Class({
     cleanup: function () {
         //detach plugins
         if (this.plugins.getLength > 0) {
-            this.plugins.each(function (plugin) {
+            Object.each(this.plugins, function (plugin) {
                 plugin.detach();
                 plugin.destroy();
             }, this);
         }
-        this.plugins.empty();
-        if (this.options.useLang && $defined(this.bound.changeText)) {
-            MooTools.lang.removeEvent('langChange', this.bound.changeText);
+        this.plugins = {};
+        if (this.options.useLang && this.bound.changeText !== undefined && this.bound.changeText !== null) {
+            Locale.removeEvent('change', this.bound.changeText);
         }
         this.bound = null;
     },
@@ -359,7 +384,7 @@ Jx.Object = new Class({
      * Method: init
      * virtual initialization method to be implemented by sub-classes
      */
-    init: $empty,
+    init: function(){},
 
     /**
      * APIMethod: registerPlugin
@@ -370,8 +395,8 @@ Jx.Object = new Class({
      * plugin - the plugin to register with this object
      */
     registerPlugin: function (plugin) {
-        if (!this.plugins.has(plugin.name)) {
-            this.plugins.set(plugin.name,  plugin);
+        if (!Object.keys(this.plugins).contains(plugin.name)) {
+            this.plugins[plugin.name] = plugin;
         }
     },
     /**
@@ -383,8 +408,8 @@ Jx.Object = new Class({
      * plugin - the plugin to deregister.
      */
     deregisterPlugin: function (plugin) {
-        if (this.plugins.has(plugin.name)) {
-            this.plugins.erase(plugin.name);
+        if (Object.keys(this.plugins).contains(plugin.name)) {
+            delete this.plugins[plugin.name];
         }
     },
 
@@ -397,35 +422,23 @@ Jx.Object = new Class({
      * name - the name of the plugin as defined in the plugin's name property
      */
     getPlugin: function (name) {
-        if (this.plugins.has(name)) {
-            return this.plugins.get(name);
+        if (Object.keys(this.plugins).contains(name)) {
+            return this.plugins[name];
         }
     },
 
     /**
      * APIMethod: getText
      *
-     * returns the text for a jx.widget used in a label.
+     * returns the localized text.
      *
      * Parameters:
-     * val - <String> || <Function> || <Object> = { set: '', key: ''[, value: ''] } for a MooTools.lang object
+     * val - <String> || <Function> || <Object> = { set: '', key: ''[, value: ''] } for a Locale object
      */
     getText: function(val) {
-      var result = '';
-      if (Jx.type(val) == 'string' || Jx.type(val) == 'number') {
-        result = val;
-      } else if (Jx.type(val) == 'function') {
-        result = val();
-      } else if (Jx.type(val) == 'object' && $defined(val.set) && $defined(val.key)) {
-        // COMMENT: just an idea how a localization object could be stored to the instance if needed somewhere else and options change?
-        this.i18n = val;
-        if($defined(val.value)) {
-          result = MooTools.lang.get(val.set, val.key)[val.value];
-        }else{
-          result = MooTools.lang.get(val.set, val.key);
-        }
-      }
-      return result;
+      // COMMENT: just an idea how a localization object could be stored to the instance if needed somewhere else and options change?
+      this.i18n = val;
+      return Jx.getText(val);
     },
 
     /**
@@ -437,7 +450,7 @@ Jx.Object = new Class({
      * lang - the language being changed to or that had it's data set of
      *    translations changed.
      */
-    changeText : $empty,
+    changeText : function(){},
 
     /**
      * Method: generateId
@@ -449,4 +462,51 @@ Jx.Object = new Class({
         delete this.uid;
         return prefix + uid;
     }
+});
+
+
+/**
+ * Rewrite Document.id so that we can call toElement on a Jx.Widget instance.
+ * It is placed here as we need Jx.Object defined before we can use it.
+ */
+Document.implement({
+    
+    id: (function(){
+
+        var types = {
+
+    		string: function(id, nocash, doc){
+				id = Slick.find(doc, '#' + id.replace(/(\W)/g, '\\$1'));
+				return (id) ? types.element(id, nocash) : null;
+			},
+
+			element: function(el, nocash){
+				$uid(el);
+				if (!nocash && !el.$family && !(/^(?:object|embed)$/i).test(el.tagName)){
+					Object.append(el, Element.Prototype);
+				}
+				return el;
+			},
+
+			object: function(obj, nocash, doc){
+				if (obj.toElement) return types.element(obj.toElement(doc), nocash);
+				return null;
+			}
+
+		};
+
+		types.textnode = types.whitespace = types.window = types.document = function(zero){
+			return zero;
+		};
+
+		return function(el, nocash, doc){
+			if (el && el.$family && el.uid) return el;
+            if (el instanceof Jx.Object) {
+                return types.element(el.toElement(doc || document), nocash);
+            }
+			var type = typeOf(el);
+			return (types[type]) ? types[type](el, nocash, doc || document) : null;
+		};
+
+	})()
 });

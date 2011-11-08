@@ -3,19 +3,22 @@
 
 script: IframeShim.js
 
+name: IframeShim
+
 description: Defines IframeShim, a class for obscuring select lists and flash objects in IE.
 
 license: MIT-style license
 
 authors:
- - Aaron Newton
+  - Aaron Newton
 
 requires:
- - core:1.2.4/Element.Event
- - core:1.2.4/Element.Style
- - core:1.2.4/Options Events
- - /Element.Position
- - /Class.Occlude
+  - Core/Element.Event
+  - Core/Element.Style
+  - Core/Options
+  - Core/Events
+  - /Element.Position
+  - /Class.Occlude
 
 provides: [IframeShim]
 
@@ -33,7 +36,7 @@ var IframeShim = new Class({
 		zIndex: null,
 		margin: 0,
 		offset: {x: 0, y: 0},
-		browsers: (Browser.Engine.trident4 || (Browser.Engine.gecko && !Browser.Engine.gecko19 && Browser.Platform.mac))
+		browsers: (Browser.ie6 || (Browser.firefox && Browser.version < 3 && Browser.Platform.mac))
 	},
 
 	property: 'IframeShim',
@@ -47,7 +50,7 @@ var IframeShim = new Class({
 	},
 
 	makeShim: function(){
-		if(this.options.browsers){
+		if (this.options.browsers){
 			var zIndex = this.element.getStyle('zIndex').toInt();
 
 			if (!zIndex){
@@ -56,7 +59,7 @@ var IframeShim = new Class({
 				if (pos == 'static' || !pos) this.element.setStyle('position', 'relative');
 				this.element.setStyle('zIndex', zIndex);
 			}
-			zIndex = ($chk(this.options.zIndex) && zIndex > this.options.zIndex) ? this.options.zIndex : zIndex - 1;
+			zIndex = ((this.options.zIndex != null || this.options.zIndex === 0) && zIndex > this.options.zIndex) ? this.options.zIndex : zIndex - 1;
 			if (zIndex < 0) zIndex = 1;
 			this.shim = new Element('iframe', {
 				src: this.options.src,
@@ -78,14 +81,14 @@ var IframeShim = new Class({
 			if (!IframeShim.ready) window.addEvent('load', inject);
 			else inject();
 		} else {
-			this.position = this.hide = this.show = this.dispose = $lambda(this);
+			this.position = this.hide = this.show = this.dispose = Function.from(this);
 		}
 	},
 
 	position: function(){
 		if (!IframeShim.ready || !this.shim) return this;
-		var size = this.element.measure(function(){ 
-			return this.getSize(); 
+		var size = this.element.measure(function(){
+			return this.getSize();
 		});
 		if (this.options.margin != undefined){
 			size.x = size.x - (this.options.margin * 2);

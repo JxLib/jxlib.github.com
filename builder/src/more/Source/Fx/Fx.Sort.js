@@ -3,17 +3,19 @@
 
 script: Fx.Sort.js
 
+name: Fx.Sort
+
 description: Defines Fx.Sort, a class that reorders lists with a transition.
 
 license: MIT-style license
 
 authors:
- - Aaron Newton
+  - Aaron Newton
 
 requires:
- - core:1.2.4/Element.Dimensions
- - /Fx.Elements
- - /Element.Measure
+  - Core/Element.Dimensions
+  - /Fx.Elements
+  - /Element.Measure
 
 provides: [Fx.Sort]
 
@@ -42,13 +44,16 @@ Fx.Sort = new Class({
 		});
 	},
 
-	sort: function(newOrder){
-		if ($type(newOrder) != 'array') return false;
+	sort: function(){
+		if (!this.check(arguments)) return this;
+		var newOrder = Array.flatten(arguments);
+
 		var top = 0,
 			left = 0,
 			next = {},
 			zero = {},
 			vert = this.options.mode == 'vertical';
+
 		var current = this.elements.map(function(el, index){
 			var size = el.getComputedSize({styles: ['border', 'padding', 'margin']});
 			var val;
@@ -67,12 +72,13 @@ Fx.Sort = new Class({
 				};
 				left += val.width;
 			}
-			var plain = vert ? 'top' : 'left';
+			var plane = vert ? 'top' : 'left';
 			zero[index] = {};
-			var start = el.getStyle(plain).toInt();
-			zero[index][plain] = start || 0;
+			var start = el.getStyle(plane).toInt();
+			zero[index][plane] = start || 0;
 			return val;
 		}, this);
+
 		this.set(zero);
 		newOrder = newOrder.map(function(i){ return i.toInt(); });
 		if (newOrder.length != this.elements.length){
@@ -82,8 +88,9 @@ Fx.Sort = new Class({
 			if (newOrder.length > this.elements.length)
 				newOrder.splice(this.elements.length-1, newOrder.length - this.elements.length);
 		}
-		var margin = top = left = 0;
-		newOrder.each(function(item, index){
+		var margin = 0;
+		top = left = 0;
+		newOrder.each(function(item){
 			var newPos = {};
 			if (vert){
 				newPos.top = top - current[item].top - margin;
@@ -96,11 +103,12 @@ Fx.Sort = new Class({
 			next[item]=newPos;
 		}, this);
 		var mapped = {};
-		$A(newOrder).sort().each(function(index){
+		Array.clone(newOrder).sort().each(function(index){
 			mapped[index] = next[index];
 		});
 		this.start(mapped);
 		this.currentOrder = newOrder;
+
 		return this;
 	},
 
@@ -128,6 +136,10 @@ Fx.Sort = new Class({
 		});
 	},
 
+	getCurrentOrder: function(){
+		return this.currentOrder;
+	},
+
 	forward: function(){
 		return this.sort(this.getDefaultOrder());
 	},
@@ -147,12 +159,13 @@ Fx.Sort = new Class({
 	},
 
 	swap: function(one, two){
-		if ($type(one) == 'element') one = this.elements.indexOf(one);
-		if ($type(two) == 'element') two = this.elements.indexOf(two);
-		
-		var newOrder = $A(this.currentOrder);
+		if (typeOf(one) == 'element') one = this.elements.indexOf(one);
+		if (typeOf(two) == 'element') two = this.elements.indexOf(two);
+
+		var newOrder = Array.clone(this.currentOrder);
 		newOrder[this.currentOrder.indexOf(one)] = two;
 		newOrder[this.currentOrder.indexOf(two)] = one;
+
 		return this.sort(newOrder);
 	}
 

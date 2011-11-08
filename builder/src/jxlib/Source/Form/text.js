@@ -37,6 +37,7 @@ provides: [Jx.Field.Text]
 Jx.Field.Text = new Class({
 
     Extends: Jx.Field,
+    Family: "Jx.Field.Text",
 
     options: {
         /**
@@ -64,14 +65,26 @@ Jx.Field.Text = new Class({
     render: function () {
         this.parent();
 
+        this.field.addEvents({
+            keydown: this.onKeyDown.bind(this),
+            keyup: this.onKeyUp.bind(this)
+        });
         //create the overText instance if needed
-        if ($defined(this.options.overText)) {
-            var opts = $extend({}, this.options.overText);
+        if (this.options.overText !== undefined && this.options.overText !== null) {
+            var opts = Object.append({}, this.options.overText);
             this.field.set('alt', this.options.tip);
             this.overText = new OverText(this.field, opts);
             this.overText.show();
         }
 
+    },
+    
+    onKeyDown: function(e){
+        this.fireEvent('keydown',[this,e]);
+    },
+    
+    onKeyUp: function(e){
+        this.fireEvent('keyup', [this,e]);   
     }
 
 });

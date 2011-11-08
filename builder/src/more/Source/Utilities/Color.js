@@ -3,58 +3,58 @@
 
 script: Color.js
 
+name: Color
+
 description: Class for creating and manipulating colors in JavaScript. Supports HSB -> RGB Conversions and vice versa.
 
 license: MIT-style license
 
 authors:
- - Valerio Proietti
+  - Valerio Proietti
 
 requires:
- - core:1.2.4/Array
- - core:1.2.4/String
- - core:1.2.4/Number
- - core:1.2.4/Hash
- - core:1.2.4/Function
- - core:1.2.4/$util
+  - Core/Array
+  - Core/String
+  - Core/Number
+  - Core/Hash
+  - Core/Function
+  - MooTools.More
 
 provides: [Color]
 
 ...
 */
 
-var Color = new Native({
+(function(){
 
-	initialize: function(color, type){
-		if (arguments.length >= 3){
-			type = 'rgb'; color = Array.slice(arguments, 0, 3);
-		} else if (typeof color == 'string'){
-			if (color.match(/rgb/)) color = color.rgbToHex().hexToRgb(true);
-			else if (color.match(/hsb/)) color = color.hsbToRgb();
-			else color = color.hexToRgb(true);
-		}
-		type = type || 'rgb';
-		switch (type){
-			case 'hsb':
-				var old = color;
-				color = color.hsbToRgb();
-				color.hsb = old;
-			break;
-			case 'hex': color = color.hexToRgb(true); break;
-		}
-		color.rgb = color.slice(0, 3);
-		color.hsb = color.hsb || color.rgbToHsb();
-		color.hex = color.rgbToHex();
-		return $extend(color, this);
+var Color = this.Color = new Type('Color', function(color, type){
+	if (arguments.length >= 3){
+		type = 'rgb'; color = Array.slice(arguments, 0, 3);
+	} else if (typeof color == 'string'){
+		if (color.match(/rgb/)) color = color.rgbToHex().hexToRgb(true);
+		else if (color.match(/hsb/)) color = color.hsbToRgb();
+		else color = color.hexToRgb(true);
 	}
-
+	type = type || 'rgb';
+	switch (type){
+		case 'hsb':
+			var old = color;
+			color = color.hsbToRgb();
+			color.hsb = old;
+		break;
+		case 'hex': color = color.hexToRgb(true); break;
+	}
+	color.rgb = color.slice(0, 3);
+	color.hsb = color.hsb || color.rgbToHsb();
+	color.hex = color.rgbToHex();
+	return Object.append(color, this);
 });
 
 Color.implement({
 
 	mix: function(){
 		var colors = Array.slice(arguments);
-		var alpha = ($type(colors.getLast()) == 'number') ? colors.pop() : 50;
+		var alpha = (typeOf(colors.getLast()) == 'number') ? colors.pop() : 50;
 		var rgb = this.slice();
 		colors.each(function(color){
 			color = new Color(color);
@@ -83,15 +83,15 @@ Color.implement({
 
 });
 
-var $RGB = function(r, g, b){
+this.$RGB = function(r, g, b){
 	return new Color([r, g, b], 'rgb');
 };
 
-var $HSB = function(h, s, b){
+this.$HSB = function(h, s, b){
 	return new Color([h, s, b], 'hsb');
 };
 
-var $HEX = function(hex){
+this.$HEX = function(hex){
 	return new Color(hex, 'hex');
 };
 
@@ -107,7 +107,7 @@ Array.implement({
 		var delta = max - min;
 		var brightness = max / 255,
 				saturation = (max != 0) ? delta / max : 0;
-		if(saturation != 0) {
+		if (saturation != 0){
 			var rr = (max - red) / delta;
 			var gr = (max - green) / delta;
 			var br = (max - blue) / delta;
@@ -157,3 +157,6 @@ String.implement({
 	}
 
 });
+
+})();
+

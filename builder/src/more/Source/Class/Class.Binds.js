@@ -3,16 +3,18 @@
 
 script: Class.Binds.js
 
+name: Class.Binds
+
 description: Automagically binds specified methods in a class to the instance of the class.
 
 license: MIT-style license
 
 authors:
- - Aaron Newton
+  - Aaron Newton
 
 requires:
- - core:1.2.4/Class
- - /MooTools.More
+  - Core/Class
+  - /MooTools.More
 
 provides: [Class.Binds]
 
@@ -20,12 +22,13 @@ provides: [Class.Binds]
 */
 
 Class.Mutators.Binds = function(binds){
-    return binds;
+	if (!this.prototype.initialize) this.implement('initialize', function(){});
+	return Array.from(binds).concat(this.prototype.Binds || []);
 };
 
 Class.Mutators.initialize = function(initialize){
 	return function(){
-		$splat(this.Binds).each(function(name){
+		Array.from(this.Binds).each(function(name){
 			var original = this[name];
 			if (original) this[name] = original.bind(this);
 		}, this);

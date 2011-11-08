@@ -31,6 +31,7 @@ provides: [Jx.Plugin.Grid.Resize]
 Jx.Plugin.Grid.Resize = new Class({
 
     Extends : Jx.Plugin,
+    Family: "Jx.Plugin.Grid.Resize",
     
     name: 'Resize',
     
@@ -49,7 +50,7 @@ Jx.Plugin.Grid.Resize = new Class({
         /**
          * Option: tooltip
          * the tooltip to display for the draggable portion of the
-         * cell header, localized with MooTools.lang.get('Jx','plugin.resize').tooltip for default
+         * cell header, localized with Locale.get('Jx','plugin.resize').tooltip for default
          */
         tooltip: ''
     },
@@ -76,7 +77,7 @@ Jx.Plugin.Grid.Resize = new Class({
      * Sets up the plugin and connects it to the grid
      */
     attach: function (grid) {
-      if (!$defined(grid) && !(grid instanceof Jx.Grid)) {
+      if (grid === undefined || grid === null || !(grid instanceof Jx.Grid)) {
           return;
       }
       this.parent(grid);
@@ -103,7 +104,7 @@ Jx.Plugin.Grid.Resize = new Class({
      * APIMethod: activate
      */
     activate: function(option) {
-        if ($defined(this.options[option])) {
+        if (this.options[option] !== undefined && this.options[option] !== null) {
           this.options[option] = true;
         }
         if (this.grid.columns.useHeaders()) {
@@ -115,7 +116,7 @@ Jx.Plugin.Grid.Resize = new Class({
      * APIMethod: deactivate
      */
     deactivate: function(option) {
-        if ($defined(this.options[option])) {
+        if (this.options[option] !== undefined && this.options[option] !== null) {
           this.options[option] = false;
         }
         this.createHandles();

@@ -1,17 +1,15 @@
 /*
 ---
 
-script: Request.HTML.js
+name: Request.HTML
 
 description: Extends the basic Request Class with additional methods for interacting with HTML responses.
 
 license: MIT-style license.
 
-requires:
-- /Request
-- /Element
+requires: [Element, Request]
 
-provides: [Request.HTML]
+provides: Request.HTML
 
 ...
 */
@@ -24,32 +22,10 @@ Request.HTML = new Class({
 		update: false,
 		append: false,
 		evalScripts: true,
-		filter: false
-	},
-
-	processHTML: function(text){
-		var match = text.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-		text = (match) ? match[1] : text;
-
-		var container = new Element('div');
-
-		return $try(function(){
-			var root = '<root>' + text + '</root>', doc;
-			if (Browser.Engine.trident){
-				doc = new ActiveXObject('Microsoft.XMLDOM');
-				doc.async = false;
-				doc.loadXML(root);
-			} else {
-				doc = new DOMParser().parseFromString(root, 'text/xml');
-			}
-			root = doc.getElementsByTagName('root')[0];
-			if (!root) return null;
-			for (var i = 0, k = root.childNodes.length; i < k; i++){
-				var child = Element.clone(root.childNodes[i], true, true);
-				if (child) container.grab(child);
-			}
-			return container;
-		}) || container.set('html', text);
+		filter: false,
+		headers: {
+			Accept: 'text/html, application/xml, text/xml, */*'
+		}
 	},
 
 	success: function(text){
@@ -59,15 +35,24 @@ Request.HTML = new Class({
 			response.javascript = script;
 		});
 
-		var temp = this.processHTML(response.html);
+		var match = response.html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+		if (match) response.html = match[1];
+		var temp = new Element('div').set('html', response.html);
 
 		response.tree = temp.childNodes;
-		response.elements = temp.getElements('*');
+		response.elements = temp.getElements(options.filter || '*');
 
-		if (options.filter) response.tree = response.elements.filter(options.filter);
-		if (options.update) document.id(options.update).empty().set('html', response.html);
-		else if (options.append) document.id(options.append).adopt(temp.getChildren());
-		if (options.evalScripts) $exec(response.javascript);
+		if (options.filter) response.tree = response.elements;
+		if (options.update){
+			var update = document.id(options.update).empty();
+			if (options.filter) update.adopt(response.elements);
+			else update.set('html', response.html);
+		} else if (options.append){
+			var append = document.id(options.append);
+			if (options.filter) response.elements.reverse().inject(append);
+			else append.adopt(temp.getChildren());
+		}
+		if (options.evalScripts) Browser.exec(response.javascript);
 
 		this.onSuccess(response.tree, response.elements, response.html, response.javascript);
 	}
@@ -77,17 +62,18 @@ Request.HTML = new Class({
 Element.Properties.load = {
 
 	set: function(options){
-		var load = this.retrieve('load');
-		if (load) load.cancel();
-		return this.eliminate('load').store('load:options', $extend({data: this, link: 'cancel', update: this, method: 'get'}, options));
+		var load = this.get('load').cancel();
+		load.setOptions(options);
+		return this;
 	},
 
-	get: function(options){
-		if (options || ! this.retrieve('load')){
-			if (options || !this.retrieve('load:options')) this.set('load', options);
-			this.store('load', new Request.HTML(this.retrieve('load:options')));
+	get: function(){
+		var load = this.retrieve('load');
+		if (!load){
+			load = new Request.HTML({data: this, link: 'cancel', update: this, method: 'get'});
+			this.store('load', load);
 		}
-		return this.retrieve('load');
+		return load;
 	}
 
 };
@@ -95,7 +81,7 @@ Element.Properties.load = {
 Element.implement({
 
 	load: function(){
-		this.get('load').send(Array.link(arguments, {data: Object.type, url: String.type}));
+		this.get('load').send(Array.link(arguments, {data: Type.isObject, url: Type.isString}));
 		return this;
 	}
 

@@ -3,16 +3,18 @@
 
 script: Fx.Move.js
 
+name: Fx.Move
+
 description: Defines Fx.Move, a class that works with Element.Position.js to transition an element from one location to another.
 
 license: MIT-style license
 
 authors:
- - Aaron Newton
+  - Aaron Newton
 
 requires:
- - core:1.2.4/Fx.Morph
- - /Element.Position
+  - Core/Fx.Morph
+  - /Element.Position
 
 provides: [Fx.Move]
 
@@ -31,7 +33,12 @@ Fx.Move = new Class({
 	},
 
 	start: function(destination){
-		return this.parent(this.element.position($merge(this.options, destination, {returnPos: true})));
+		var element = this.element,
+			topLeft = element.getStyles('top', 'left');
+		if (topLeft.top == 'auto' || topLeft.left == 'auto'){
+			element.setPosition(element.getPosition(element.getOffsetParent()));
+		}
+		return this.parent(element.position(Object.merge({}, this.options, destination, {returnPos: true})));
 	}
 
 });
@@ -39,17 +46,17 @@ Fx.Move = new Class({
 Element.Properties.move = {
 
 	set: function(options){
-		var morph = this.retrieve('move');
-		if (morph) morph.cancel();
-		return this.eliminate('move').store('move:options', $extend({link: 'cancel'}, options));
+		this.get('move').cancel().setOptions(options);
+		return this;
 	},
 
-	get: function(options){
-		if (options || !this.retrieve('move')){
-			if (options || !this.retrieve('move:options')) this.set('move', options);
-			this.store('move', new Fx.Move(this, this.retrieve('move:options')));
+	get: function(){
+		var move = this.retrieve('move');
+		if (!move){
+			move = new Fx.Move(this, {link: 'cancel'});
+			this.store('move', move);
 		}
-		return this.retrieve('move');
+		return move;
 	}
 
 };

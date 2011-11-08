@@ -28,7 +28,7 @@ css:
  * Jx.Dialog.Message is an extension of Jx.Dialog that allows the developer
  * to display a message to the user. It only presents an OK button.
  * 
- * MooTools.lang Keys:
+ * Locale Keys:
  * - message.okButton
  *
  * License:
@@ -37,8 +37,8 @@ css:
  * This file is licensed under an MIT style license
  */
 Jx.Dialog.Message = new Class({
-    Family: 'Jx.Dialog.Message',
     Extends: Jx.Dialog,
+    Family: 'Jx.Dialog.Message',
     Binds: ['onOk'],
     options: {
         /**
@@ -135,7 +135,7 @@ Jx.Dialog.Message = new Class({
      */
     setMessage: function(message) {
       this.options.message = message;
-      if ($defined(this.question)) {
+      if (this.question != undefined && this.question != null) {
         this.question.set('html',this.getText(message));
       }
     },
@@ -146,7 +146,7 @@ Jx.Dialog.Message = new Class({
      */
     changeText: function (lang) {
       this.parent();
-      if ($defined(this.ok)) {
+      if (this.ok != undefined && this.ok != null) {
         this.ok.setLabel({set:'Jx',key:'message',value:'okButton'});
       }
       if(Jx.type(this.options.message) === 'object') {

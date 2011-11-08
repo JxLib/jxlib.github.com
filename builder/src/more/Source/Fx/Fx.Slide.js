@@ -3,16 +3,19 @@
 
 script: Fx.Slide.js
 
+name: Fx.Slide
+
 description: Effect to slide an element in and out of view.
 
 license: MIT-style license
 
 authors:
- - Valerio Proietti
+  - Valerio Proietti
 
 requires:
- - core:1.2.4/Fx Element.Style
- - /MooTools.More
+  - Core/Fx
+  - Core/Element.Style
+  - /MooTools.More
 
 provides: [Fx.Slide]
 
@@ -26,27 +29,36 @@ Fx.Slide = new Class({
 	options: {
 		mode: 'vertical',
 		wrapper: false,
-		hideOverflow: true
+		hideOverflow: true,
+		resetHeight: false
 	},
 
 	initialize: function(element, options){
-		this.addEvent('complete', function(){
-			this.open = (this.wrapper['offset' + this.layout.capitalize()] != 0);
-			if (this.open) this.wrapper.setStyle('height', '');
-			if (this.open && Browser.Engine.webkit419) this.element.dispose().inject(this.wrapper);
-		}, true);
-		this.element = this.subject = document.id(element);
+		element = this.element = this.subject = document.id(element);
 		this.parent(options);
-		var wrapper = this.element.retrieve('wrapper');
-		var styles = this.element.getStyles('margin', 'position', 'overflow');
-		if (this.options.hideOverflow) styles = $extend(styles, {overflow: 'hidden'});
-		if (this.options.wrapper) wrapper = document.id(this.options.wrapper).setStyles(styles);
-		this.wrapper = wrapper || new Element('div', {
+		options = this.options;
+
+		var wrapper = element.retrieve('wrapper'),
+			styles = element.getStyles('margin', 'position', 'overflow');
+
+		if (options.hideOverflow) styles = Object.append(styles, {overflow: 'hidden'});
+		if (options.wrapper) wrapper = document.id(options.wrapper).setStyles(styles);
+
+		if (!wrapper) wrapper = new Element('div', {
 			styles: styles
-		}).wraps(this.element);
-		this.element.store('wrapper', this.wrapper).setStyle('margin', 0);
+		}).wraps(element);
+
+		element.store('wrapper', wrapper).setStyle('margin', 0);
+		if (element.getStyle('overflow') == 'visible') element.setStyle('overflow', 'hidden');
+
 		this.now = [];
 		this.open = true;
+		this.wrapper = wrapper;
+
+		this.addEvent('complete', function(){
+			this.open = (wrapper['offset' + this.layout.capitalize()] != 0);
+			if (this.open && this.options.resetHeight) wrapper.setStyle('height', '');
+		}, true);
 	},
 
 	vertical: function(){
@@ -76,11 +88,13 @@ Fx.Slide = new Class({
 	start: function(how, mode){
 		if (!this.check(how, mode)) return this;
 		this[mode || this.options.mode]();
-		var margin = this.element.getStyle(this.margin).toInt();
-		var layout = this.wrapper.getStyle(this.layout).toInt();
-		var caseIn = [[margin, layout], [0, this.offset]];
-		var caseOut = [[margin, layout], [-this.offset, 0]];
-		var start;
+
+		var margin = this.element.getStyle(this.margin).toInt(),
+			layout = this.wrapper.getStyle(this.layout).toInt(),
+			caseIn = [[margin, layout], [0, this.offset]],
+			caseOut = [[margin, layout], [-this.offset, 0]],
+			start;
+
 		switch (how){
 			case 'in': start = caseIn; break;
 			case 'out': start = caseOut; break;
@@ -118,17 +132,17 @@ Fx.Slide = new Class({
 Element.Properties.slide = {
 
 	set: function(options){
-		var slide = this.retrieve('slide');
-		if (slide) slide.cancel();
-		return this.eliminate('slide').store('slide:options', $extend({link: 'cancel'}, options));
+		this.get('slide').cancel().setOptions(options);
+		return this;
 	},
 
-	get: function(options){
-		if (options || !this.retrieve('slide')){
-			if (options || !this.retrieve('slide:options')) this.set('slide', options);
-			this.store('slide', new Fx.Slide(this, this.retrieve('slide:options')));
+	get: function(){
+		var slide = this.retrieve('slide');
+		if (!slide){
+			slide = new Fx.Slide(this, {link: 'cancel'});
+			this.store('slide', slide);
 		}
-		return this.retrieve('slide');
+		return slide;
 	}
 
 };

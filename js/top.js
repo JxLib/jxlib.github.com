@@ -43,7 +43,7 @@ window.addEvent('load', function() {
         cacheContent: true,
         onDown: function() {
             (function() {
-                window.top.main.location.href = 'reference/examples/index-new.html';
+                window.top.main.location.href = 'reference/choose-examples.html';
                 Cookie.write('JxHomePage.CurrentTab', 'examplesTab');
             }).delay(10);
         }
@@ -53,7 +53,7 @@ window.addEvent('load', function() {
         content: 'refList',
         onDown: function() {
             (function(){
-                window.top.main.location.href = 'reference/api';
+                window.top.main.location.href = 'reference/choose-api.html';
                 Cookie.write('JxHomePage.CurrentTab', 'refTab');
             }).delay();
         }

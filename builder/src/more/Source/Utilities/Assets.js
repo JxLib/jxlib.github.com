@@ -3,16 +3,18 @@
 
 script: Assets.js
 
+name: Assets
+
 description: Provides methods to dynamically load JavaScript, CSS, and Image files into the document.
 
 license: MIT-style license
 
 authors:
- - Valerio Proietti
+  - Valerio Proietti
 
 requires:
- - core:1.2.4/Element.Event
- - /MooTools.More
+  - Core/Element.Event
+  - /MooTools.More
 
 provides: [Assets]
 
@@ -22,62 +24,64 @@ provides: [Assets]
 var Asset = {
 
 	javascript: function(source, properties){
-		properties = $extend({
-			onload: $empty,
-			document: document,
-			check: $lambda(true)
-		}, properties);
-		
-		if (properties.onLoad) properties.onload = properties.onLoad;
-		
-		var script = new Element('script', {src: source, type: 'text/javascript'});
+		if (!properties) properties = {};
 
-		var load = properties.onload.bind(script), 
-			check = properties.check, 
-			doc = properties.document;
+		var script = new Element('script', {src: source, type: 'text/javascript'}),
+			doc = properties.document || document,
+			load = properties.onload || properties.onLoad;
+
 		delete properties.onload;
-		delete properties.check;
+		delete properties.onLoad;
 		delete properties.document;
 
-		script.addEvents({
-			load: load,
-			readystatechange: function(){
-				if (['loaded', 'complete'].contains(this.readyState)) load();
+		if (load){
+			if (typeof script.onreadystatechange != 'undefined'){
+				script.addEvent('readystatechange', function(){
+					if (['loaded', 'complete'].contains(this.readyState)) load.call(this);
+				});
+			} else {
+				script.addEvent('load', load);
 			}
-		}).set(properties);
+		}
 
-		if (Browser.Engine.webkit419) var checker = (function(){
-			if (!$try(check)) return;
-			$clear(checker);
-			load();
-		}).periodical(50);
-
-		return script.inject(doc.head);
+		return script.set(properties).inject(doc.head);
 	},
 
 	css: function(source, properties){
-		return new Element('link', $merge({
+		if (!properties) properties = {};
+
+		var link = new Element('link', {
 			rel: 'stylesheet',
 			media: 'screen',
 			type: 'text/css',
 			href: source
-		}, properties)).inject(document.head);
+		});
+
+		var load = properties.onload || properties.onLoad,
+			doc = properties.document || document;
+
+		delete properties.onload;
+		delete properties.onLoad;
+		delete properties.document;
+
+		if (load) link.addEvent('load', load);
+		return link.set(properties).inject(doc.head);
 	},
 
 	image: function(source, properties){
-		properties = $merge({
-			onload: $empty,
-			onabort: $empty,
-			onerror: $empty
-		}, properties);
-		var image = new Image();
-		var element = document.id(image) || new Element('img');
+		if (!properties) properties = {};
+
+		var image = new Image(),
+			element = document.id(image) || new Element('img');
+
 		['load', 'abort', 'error'].each(function(name){
-			var type = 'on' + name;
-			var cap = name.capitalize();
-			if (properties['on' + cap]) properties[type] = properties['on' + cap];
-			var event = properties[type];
+			var type = 'on' + name,
+				cap = 'on' + name.capitalize(),
+				event = properties[type] || properties[cap] || function(){};
+
+			delete properties[cap];
 			delete properties[type];
+
 			image[type] = function(){
 				if (!image) return;
 				if (!element.parentNode){
@@ -89,31 +93,35 @@ var Asset = {
 				element.fireEvent(name, element, 1);
 			};
 		});
+
 		image.src = element.src = source;
 		if (image && image.complete) image.onload.delay(1);
 		return element.set(properties);
 	},
 
 	images: function(sources, options){
-		options = $merge({
-			onComplete: $empty,
-			onProgress: $empty,
-			onError: $empty,
+		sources = Array.from(sources);
+
+		var fn = function(){},
+			counter = 0;
+
+		options = Object.merge({
+			onComplete: fn,
+			onProgress: fn,
+			onError: fn,
 			properties: {}
 		}, options);
-		sources = $splat(sources);
-		var images = [];
-		var counter = 0;
-		return new Elements(sources.map(function(source){
-			return Asset.image(source, $extend(options.properties, {
+
+		return new Elements(sources.map(function(source, index){
+			return Asset.image(source, Object.append(options.properties, {
 				onload: function(){
-					options.onProgress.call(this, counter, sources.indexOf(source));
 					counter++;
+					options.onProgress.call(this, counter, index, source);
 					if (counter == sources.length) options.onComplete();
 				},
 				onerror: function(){
-					options.onError.call(this, counter, sources.indexOf(source));
 					counter++;
+					options.onError.call(this, counter, index, source);
 					if (counter == sources.length) options.onComplete();
 				}
 			}));

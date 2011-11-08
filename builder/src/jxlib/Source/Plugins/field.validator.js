@@ -34,6 +34,7 @@ provides: [Jx.Plugin.Field.Validator]
 Jx.Plugin.Field.Validator = new Class({
 
     Extends : Jx.Plugin,
+    Family: "Jx.Plugin.Field.Validator",
     name: 'Field.Validator',
 
     options: {
@@ -90,7 +91,7 @@ Jx.Plugin.Field.Validator = new Class({
     init: function () {
         this.parent();
         this.errors = [];
-        this.validators = new Hash();
+        this.validators = {};
         this.bound.validate = this.validate.bind(this);
         this.bound.reset = this.reset.bind(this);
     },
@@ -99,7 +100,7 @@ Jx.Plugin.Field.Validator = new Class({
      * Sets up the plugin and connects it to the field
      */
     attach: function (field) {
-        if (!$defined(field) && !(field instanceof Jx.Field)) {
+        if (field === undefined || field === null || !(field instanceof Jx.Field)) {
             return;
         }
         this.field = field;
@@ -114,15 +115,15 @@ Jx.Plugin.Field.Validator = new Class({
             if (t === 'string') {
                 this.field.field.addClass(v);
             } else if (t === 'object') {
-                this.validators.set(v.validator.name, new InputValidator(v.validator.name, v.validator.options));
+                this.validators[v.validator.name] = new InputValidator(v.validator.name, v.validator.options);
                 this.field.field.addClass(v.validatorClass);
             }
         }, this);
         if (this.options.validateOnBlur) {
-            this.field.field.addEvent('blur', this.bound.validate);
+            this.field.addEvent('blur', this.bound.validate);
         }
         if (this.options.validateOnChange) {
-            this.field.field.addEvent('change', this.bound.validate);
+            this.field.addEvent('change', this.bound.validate);
         }
         this.field.addEvent('reset', this.bound.reset);
     },
@@ -131,16 +132,16 @@ Jx.Plugin.Field.Validator = new Class({
      */
     detach: function () {
         if (this.field) {
-            this.field.field.removeEvent('blur', this.bound.validate);
-            this.field.field.removeEvent('change', this.bound.validate);
+            this.field.removeEvent('blur', this.bound.validate);
+            this.field.removeEvent('change', this.bound.validate);
+            this.field.removeEvent('reset', this.bound.reset);
+            this.field = null;
         }
-        this.field.removeEvent('reset', this.bound.reset);
-        this.field = null;
         this.validators = null;
     },
 
     validate: function () {
-        $clear(this.timer);
+        window.clearTimeout(this.timer);
         this.timer = this.validateField.delay(50, this);
     },
 
@@ -149,7 +150,7 @@ Jx.Plugin.Field.Validator = new Class({
         this.valid = true;
         this.errors = [];
         this.options.validators.each(function (v) {
-            var val = (Jx.type(v) === 'string') ? Form.Validator.getValidator(v) : this.validators.get(v.validator.name);
+            var val = (Jx.type(v) === 'string') ? Form.Validator.getValidator(v) : this.validators[v.validator.name];
             if (val) {
                 if (!val.test(this.field.field)) {
                     this.valid = false;
