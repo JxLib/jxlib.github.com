@@ -1,3 +1,63 @@
+
+.jxLayoutColumns {
+    position: relative;
+    width: 100%;	
+    min-height: 100%;
+}
+
+.jxLayoutColumn {
+    float: left;
+    position: relative;
+    margin-right: 10px;
+    min-height: 100%;
+}
+
+.jxLayoutColumn div.jxDialog {
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.jxLayoutColumnMarker {
+    background-color: blue;
+    border: 1px yellow dashed;
+}
+
+.jxLayoutPlaceholder {
+    height: 200px;
+    width: 100%;
+    position: relative;
+}
+
+.jxLayoutColumnLast {
+    margin-right: 0;
+}
+
+.jxLayoutDraggable .jxDialogTitle {
+    cursor: pointer;
+}
+
+.jxLayoutColumns:after, .jxLayoutColumn:after { 
+    content: "."; 
+    display: block; 
+    height: 0; 
+    font-size:0; 
+    clear: both; 
+    visibility:hidden; 
+}
+
+.jxLayoutColumns:after, .jxLayoutColumn:after { 
+    display: inline-block; 
+}
+
+/* Hides from IE Mac \*/ 
+* html .floatcontainer {
+    height: 1%;
+}
+.jxLayoutColumns:after, .jxLayoutColumn:after { 
+    display:block;
+}
+/* End Hack */ 
+
 /*
  * reset.css - Copyright (c) 2006, Yahoo! Inc. All rights reserved.
  * Code licensed under the BSD License: http://developer.yahoo.net/yui/license.txt
@@ -1166,6 +1226,12 @@ ul.jxToolbar .jxButtonHover span.jxButtonContent {
   background-color: transparent;
 }
 
+ul.jxToolbar #counter {
+    font-size: 10px;
+    height: 28px;
+    padding-top: 13px;
+}
+
 /**
  * @project         Jx
  * @revision        $Id$
@@ -2171,6 +2237,12 @@ form .jxFormInline .jxInputGroup .jxInputLabel {
   width: auto;
 }
 
+.jxFormInline .jxFieldError .jxInlineError {
+  display: inline;
+  color: #8a1f11;
+  width: auto;
+}
+
 
 /* BLOCK FORM 
  *  Sets up form elements to work as block objects so they can appear stacked */
@@ -2224,6 +2296,12 @@ form .jxFormBlock .jxInputGroup .jxInputLabel {
   width: auto;
 }
 
+.jxFormBlock .jxFieldError .jxInlineError {
+  display: block;
+  width: auto;
+  color: #8a1f11;
+}
+
 
 /* INLINE-BLOCK FORM 
  * Sets up form elements to work as inline-block objects so labels can have set 
@@ -2263,6 +2341,12 @@ form .jxFormInlineblock .jxInputGroup .jxFieldsetLegend {
 .jxFormInlineblock .jxInputGroup .jxInputLabel,
 form .jxFormInlineblock .jxInputGroup .jxInputLabel {
   display: -moz-inline-box;
+  display: inline-block;
+  width: auto;
+}
+
+.jxFormInlineblock .jxFieldError .jxInlineError {
+  color: #8a1f11;
   display: inline-block;
   width: auto;
 }
@@ -2922,7 +3006,7 @@ th.jxGridCellPrelight {
     right: 0px;
     top: 0px;
     height: 100%;
-    width: 4px;
+    width: 6px;
     cursor: col-resize;
 }
 
@@ -3135,6 +3219,40 @@ a.jxColorClose img {
     height: 16px;
 }
 
+.jxInputSpinners {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    right: 0px;
+    top: 0px;
+    margin: 0px 8px 4px 4px;
+    font-size: 0px;
+    line-height: 0px;
+}
+
+.jxInputSpinners .jxButtonContainer,
+.jxInputSpinners .jxButton {
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    background-color: transparent;
+    background-image: none;
+}
+
+img.jxInputSpinUpIcon {
+    background-image: url(images/emblems.png);
+    background-position: right -160px;
+    background-repeat: no-repeat;
+    margin-top: -2px;
+}
+
+img.jxInputSpinDownIcon {
+    background-image: url(images/emblems.png);
+    background-position: right -16px;
+    background-repeat: no-repeat;
+    margin-top: -2px; 
+}
+
 
 .jxInputOptionGroup {
     position: relative;
@@ -3143,6 +3261,238 @@ a.jxColorClose img {
 
 .jxOptionGroupColumn {
     display: inline-block;
+}
+
+.jxMonthPickerCell {
+    text-align: center;
+    border-width: 5px;
+    margin-left: 5px;
+    position: relative;
+    font-size: 12px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.jxMonthPickerCell:HOVER {
+     /*border-left: 1px solid #CDDFFD;
+    border-right: 1px solid #CDDFFD;*/
+    background-image: url(images/listitem.png);
+    background-repeat: repeat-x;
+    background-color: #CDE5FF;
+    background-position: left -24px;
+}
+
+.jxMonthPickerLeft {
+    position: absolute;
+    left: 10px;
+    top: 0px;
+}
+
+.jxMonthPickerRight {
+    position: absolute;
+    left: 80px;
+    top: 0px;
+}
+        
+.jxMonthPickerControls {
+    position: absolute;
+    left: 35px;
+    bottom: 0px;
+}
+
+.jxDatePicker {
+    position: absolute;
+    width: 165px;
+    height: 150px;
+    left: 0px;
+    border: 1px solid #000;
+    padding: 2px;
+    background-image: url(images/a_pixel.png);
+}
+
+.jxDatePickerBar {
+    position: relative;
+    overflow: hidden;    
+}
+
+img.jxPrevDatePickerIcon {
+    background-image: url(images/emblems.png);
+    background-position: right -144px;
+    background-repeat: no-repeat;
+}
+img.jxNextDatePickerIcon {
+    background-image: url(images/emblems.png);
+    background-position: right -32px;
+    background-repeat: no-repeat;
+}
+
+.jxDatePickerPrevButton .jxButtonContainer,
+.jxDatePickerPrevButton .jxButtonContent,
+.jxDatePickerPrevButton .jxButton,
+.jxDatePickerNextButton .jxButtonContainer,
+.jxDatePickerNextButton .jxButtonContent,
+.jxDatePickerNextButton .jxButton,
+.jxDatePickerBar .jxButtonContainer,
+.jxDatePickerBar .jxButtonContent,
+.jxDatePickerBar .jxButton	{
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    background-color: transparent;
+    background-image: none;
+}
+
+.jxDatePickerCell {
+    text-align: center;
+    height: 14px;
+    width: 24px;
+    border-width: 5px;
+    position: relative;
+    font-size: 10px;
+    font-weight: normal;
+    cursor: pointer;
+}
+.jxDatePickerEmptyCell {
+    height: 14px;
+    width: 24px;
+    border-width: 5px;
+    position: relative;
+}
+
+.jxDatePickerHeaderCell {
+    text-align: center;
+    height: 14px;
+    width: 24px;
+    border-width: 5px;
+    position: relative;
+    font-size: 10px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.jxDatePickerCell:HOVER {
+    margin: 0px;
+    /*border-left: 1px solid #CDDFFD;
+    border-right: 1px solid #CDDFFD;*/
+    background-image: url(images/listitem.png);
+    background-repeat: repeat-x;
+    background-color: #CDE5FF;
+    background-position: left -24px;
+}
+
+.jxDatePickerSelected {
+    margin: 0px;
+    /*border-left: 1px solid #8AABFB;
+    border-right: 1px solid #8AABFB;*/
+    background-color: #CDE5FF;
+    background-image: url(images/listitem.png);
+    background-repeat: repeat-x;
+    background-position: left -48px;
+}
+
+.jxDateFieldFlyout {
+    overflow: hidden;
+}
+
+.jxEditorTextarea {
+    display: none;
+}
+
+.jxEditorIframe {
+    width: 100%;
+    height: 100%;
+}
+
+.jxEditor {
+    border: 1px solid black;
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+}
+
+.jxEditor span.jxEditorToolbar {
+    display: block;
+    position: relative;
+}
+
+.jxEditor span.jxEditorToolbar label.jxInputLabel {
+    width: auto;
+}
+
+/**
+ * Editor Buttons
+ */
+ 
+.jxEditorButtonBold {
+   background-image: url(images/text_bold.png);
+}
+ 
+.jxEditorButtonItalic {
+   background-image: url(images/text_italic.png);
+}
+ 
+.jxEditorButtonUnderline {
+   background-image: url(images/text_underline.png);
+}
+
+.jxEditorButtonJustifyLeft {
+   background-image: url(images/text_align_left.png);
+}
+
+.jxEditorButtonJustifyRight {
+   background-image: url(images/text_align_right.png);
+}
+
+.jxEditorButtonJustifyCenter {
+   background-image: url(images/text_align_center.png);
+}
+
+.jxEditorButtonJustifyFull {
+   background-image: url(images/text_align_justify.png);
+}
+
+.jxEditorButtonImage {
+   background-image: url(images/image.png);
+}
+
+.jxEditorButtonIndent {
+   background-image: url(images/text_indent.png);
+}
+
+.jxEditorButtonLink {
+   background-image: url(images/link.png);
+}
+
+.jxEditorButtonOrderedList {
+   background-image: url(images/text_list_numbers.png);
+}
+
+.jxEditorButtonOutdent {
+   background-image: url(images/text_indent_remove.png);
+}
+
+.jxEditorButtonRedo {
+   background-image: url(images/edit-redo.png);
+}
+
+.jxEditorButtonStrikethrough {
+   background-image: url(images/text_strikethrough.png);
+}
+
+.jxEditorButtonToggleView {
+   background-image: url(images/toggleview.png);
+}
+
+.jxEditorButtonUndo {
+   background-image: url(images/edit-undo.png);
+}
+
+.jxEditorButtonUnlink {
+   background-image: url(images/link_break.png);
+}
+
+.jxEditorButtonUnorderedList {
+   background-image: url(images/text_list_bullets.png);
 }
 
 
@@ -3266,107 +3616,6 @@ a.jxColorClose img {
 
 .jxSliderDisabled {
     opacity:0.4;filter:alpha(opacity=40)
-}
-
-.jxEditorTextarea {
-    display: none;
-}
-
-.jxEditorIframe {
-    width: 100%;
-    height: 100%;
-}
-
-.jxEditor {
-    border: 1px solid black;
-    display: inline-block;
-    width: 100%;
-    height: 100%;
-}
-
-.jxEditor span.jxEditorToolbar {
-    display: block;
-    position: relative;
-}
-
-.jxEditor span.jxEditorToolbar label.jxInputLabel {
-    width: auto;
-}
-
-/**
- * Editor Buttons
- */
- 
-.jxEditorButtonBold {
-   background-image: url(images/text_bold.png);
-}
- 
-.jxEditorButtonItalic {
-   background-image: url(images/text_italic.png);
-}
- 
-.jxEditorButtonUnderline {
-   background-image: url(images/text_underline.png);
-}
-
-.jxEditorButtonJustifyLeft {
-   background-image: url(images/text_align_left.png);
-}
-
-.jxEditorButtonJustifyRight {
-   background-image: url(images/text_align_right.png);
-}
-
-.jxEditorButtonJustifyCenter {
-   background-image: url(images/text_align_center.png);
-}
-
-.jxEditorButtonJustifyFull {
-   background-image: url(images/text_align_justify.png);
-}
-
-.jxEditorButtonImage {
-   background-image: url(images/image.png);
-}
-
-.jxEditorButtonIndent {
-   background-image: url(images/text_indent.png);
-}
-
-.jxEditorButtonLink {
-   background-image: url(images/link.png);
-}
-
-.jxEditorButtonOrderedList {
-   background-image: url(images/text_list_numbers.png);
-}
-
-.jxEditorButtonOutdent {
-   background-image: url(images/text_indent_remove.png);
-}
-
-.jxEditorButtonRedo {
-   background-image: url(images/edit-redo.png);
-}
-
-.jxEditorButtonStrikethrough {
-   background-image: url(images/text_strikethrough.png);
-}
-
-.jxEditorButtonToggleView {
-   background-image: url(images/toggleview.png);
-}
-
-.jxEditorButtonUndo {
-   background-image: url(images/edit-undo.png);
-}
-
-.jxEditorButtonUnlink {
-   background-image: url(images/link_break.png);
-}
-
-.jxEditorButtonUnorderedList {
-   background-image: url(images/text_list_bullets.png);
 }
 
 
