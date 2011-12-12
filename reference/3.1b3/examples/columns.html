@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>Jx.Toolbar Examples</title>
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<script type="text/javascript" src="lib/mootools-core.js"></script>
+<script type="text/javascript" src="lib/mootools-more.js"></script>
+<script type="text/javascript" src="lib/jxlib.standalone.uncompressed.js"></script>
+<script src="js/tests.js" type="text/javascript" charset="utf-8"></script>
+<script src="js/locale.js" type="text/javascript" charset="utf-8"></script>
+<script type="text/javascript">
+window.addEvent('load', function() {
+    columnLayout();
+});
+
+console.log($(document).getElements('.tabContentActiveExamples'));
+if($(document).getElements('.tabContentActiveExamples').length > 0) {
+  $(document).getElements('.tabContentActiveExamples')[0].addEvent('loadAjax', function() {
+
+    columnLayout();
+
+  });
+}
+
+</script>
+
+<script id="columnLayoutScript" type="text/javascript">
+function columnLayout() {
+    
+    var container = new Jx.Container({
+        parent: 'containerBox',
+        topLevel: true,
+        layoutManager: {
+            name: 'columns',
+            options: {
+                columns: [{
+                    cssClass: '',
+                    width: '30%'
+                },{
+                    cssClass: '',
+                    width: '*'
+                },{
+                    cssClass: '',
+                    width: '25%'
+                }],
+                addDefaults: {
+                    isDraggable: true,
+                    column: 1,
+                    position: 'bottom'
+                },
+                dragDefaults: {
+                    dropZoneClass: 'jxDropZone',
+                    handle: '.jxPanelTitle',
+                    position: 'top',
+                    isDraggable: true
+                }
+            }
+        },
+        items: [
+            {
+                'class': Jx.Panel,
+                options: {
+                    label: 'Basic Panel 1',
+                    content: 'basicPanelContent',
+                    height: 200,
+                    id: 'widget1'
+                },
+                layoutOpts: {
+                    column: 0
+                }
+            },{
+                'class': 'panel',
+                options: {
+                    label: 'Basic Panel 2',
+                    content: 'basicPanelContent',
+                    height: 200,
+                    id: 'widget2'
+                },
+                layoutOpts: {
+                    column: 0
+                }
+            },{
+                'class': Jx.Panel,
+                options: {
+                    label: 'Basic Panel 3',
+                    content: 'basicPanelContent',
+                    height: 200,
+                    id: 'widget3'
+                },
+                layoutOpts: {
+                    column: 1
+                }
+            },{
+                'class': 'panel',
+                options: {
+                    label: 'Basic Panel 4',
+                    content: 'basicPanelContent',
+                    height: 200,
+                    id: 'widget4'
+                },
+                layoutOpts: {
+                    column: 1
+                }
+            },{
+                'class': Jx.Panel,
+                options: {
+                    label: 'Basic Panel 5',
+                    content: 'basicPanelContent',
+                    height: 200,
+                    id: 'widget5'
+                },
+                layoutOpts: {
+                    column: 2
+                }
+            },{
+                'class': 'panel',
+                options: {
+                    label: 'Basic Panel 6',
+                    content: 'basicPanelContent',
+                    height: 200,
+                    id: 'widget6'
+                },
+                layoutOpts: {
+                    column: 2
+                }
+            }
+        ]
+    });
+
+    Jx.debug = true;    
+    
+    container.addEvent('jxLayoutMoveComplete',function(){
+        console.log(container.layoutManager.serialize());
+    });
+    
+    container.resize();
+}
+</script>
+<style>
+    #containerBox {
+        position: relative;
+        width: 80%;
+        height: 700;
+        margin: 0 auto;
+    }
+</style>
+</head>
+<body>
+    <h1>Jx.LayoutManager.Columns Example</h1>
+  
+    <h2 id="columnLayout">Column Layout Example</h2>  
+    <p>
+    This example shows a container with a columnar layout defined entirely as a javascript object. Check the source to see how it was done. You can
+    drag and drop panels between columns by clicking and dragging on the panel header.
+    </p>
+    <div id="containerBox"></div>
+</body>
+</html>
